@@ -2,17 +2,17 @@ import json
 import requests
 from dataclasses import dataclass, field
 
-def jprint(obj):
-	text = json.dumps(obj, sort_keys=True, indent=4)
-	print(text)
+def jprint(obj, ind = 2):
+	print(json.dumps(obj, sort_keys=True, indent=ind))
 
-@dataclass(order=True, frozen=True)
+@dataclass(order=True)
 class Card:
 	sort_index: int = field(init=False, repr=False)
 	name: str
 	cn: int
 	set: str
 	foil: str = "No"
+	fullinfo: dict = field(default_factory=dict)
 	
 	def __post_init__(self):
 		object.__setattr__(self, "sort_index", self.name)
@@ -21,10 +21,12 @@ class Card:
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
 
+def getCardInfo(card):
+	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:{card.cn}%20set:{card.set}%20game:paper')
+
 def getPrice(card):
-	response = requests.get(f'https://api.scryfall.com/cards/search?q=cn:{card.cn}%20set:{card.set}%20game:paper')
+	response = getCardInfo(card)
 	price = None
-	# price = response.json()["data"][0]["prices"]["usd" + ("_foil" if card.foil == "Yes" else ("_etched" if card.foil == "Etched" else ""))]
 	add = ""
 	if (card.foil == "Yes"):
 		add = "_foil"
@@ -37,10 +39,7 @@ def getPrice(card):
 	except:
 		#print(card)
 		#print(response)
-		exit(f"Something went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name!")
-	
-	"""if (price == None or card.foil == "Etched"):
-		price = response.json()["data"][0]["prices"]["usd_etched"]"""
+		exit(f"Something went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
 		
 	if (price == None):
 		print(card)
@@ -53,7 +52,7 @@ def compareLists(list1, list2):
 		return False
 	
 	for index in range(len(list1)):
-		if (list1[index] != list2[index]):
+		if (str(list1[index]) != str(list2[index])):
 			return False
 	
 	return True
@@ -62,7 +61,7 @@ def getDifferences(list1, list2):
 	addLen = max(len(list1), len(list2)) - min(len(list1), len(list2))
 	diff = []
 	for i in range(min(len(list1), len(list2))):
-		diff.append(list1[i] == list2[i])
+		diff.append(str(list1[i]) == str(list2[i]))
 	for i in range(addLen):
 		diff.append(None)
 	
@@ -76,5 +75,7 @@ def allTrue(l):
 
 
 if (__name__ == "__main__"):
-	a = [True, True, True, True]
-	print(f"{a=}, {allTrue(a)}")
+	chip = Card("The Reality Chip", 74,  "NEO")
+	chip.fullinfo = getCardInfo(chip).json()
+	jprint(chip.fullinfo, 2)
+	
