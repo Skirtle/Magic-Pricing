@@ -1,19 +1,19 @@
+"""
+Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date*
+"""
+
 import time, pyodbc, datetime
-import getCards as gc
+import magicPrices as mp
 from openpyxl import Workbook, load_workbook
-from os import getcwd
 
 # Final variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
 now = datetime.datetime.now()
 timeWait = 0.2
-dir = getcwd() + "\\"
 
 # Connection to database
-driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
-pathStr = dir
-cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
+cnxn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\Dalton\Desktop\Magic-Pricing\\' + accessFilename + ";")
 cursor = cnxn.cursor()
 cnxn.setdecoding(pyodbc.SQL_CHAR, encoding='utf-8')
 cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding='utf-8')
@@ -36,12 +36,13 @@ sheet["D1"] = "Set"
 print("Accessing database for cards")
 cursor.execute("select * from Cards")
 rows = cursor.fetchall()
-cards = [gc.Card(c[0], c[1], c[2], c[3]) for c in rows]
+cards = [mp.Card(c[0], c[1], c[2], c[3]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
 column = 1
 while (sheet[f"{chr(ord('@') + column)}1"].value != None):
+	# print(sheet[f"A{column}"].value)
 	column += 1
 column = chr(ord('@') + column)
 sheet[f"{column}1"] = datetime.datetime(now.year, now.month, now.day)
@@ -54,7 +55,7 @@ rowNumber = 0
 addedCount = 0
 for card in cards:
 	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-	singlePrice = gc.getPrice(card)
+	singlePrice = mp.getPrice(card)
 	
 	# Search for an already existing cell with card name, collector number, foiling, and set
 	rowNumber = 1
@@ -62,11 +63,13 @@ for card in cards:
 	while (sheet[f"A{rowNumber}"].value != None):
 		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
 		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
-		compared = gc.getDifferences(excelCardInfo, acessCardInfo)
-		if (gc.allTrue(compared)):
+		compared = mp.getDifferences(excelCardInfo, acessCardInfo)
+		# print(f"Checking card at A{rowNumber}, {sheet[f'A{rowNumber}'].value} == {card.name}")
+		if (mp.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 			print(f"\tUpdated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
+			# print(f"\t{card.name} found")
 			found = True
 			break
 		else:
@@ -92,4 +95,3 @@ cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
 print("All files closed and saved. You may exit this program and access the updated files now")
-input()
