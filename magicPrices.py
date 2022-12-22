@@ -47,11 +47,34 @@ def getPrice(card):
 		print(response.json()["data"][0]["prices"])
 		exit("Recieved price is type None")
 	return float(price)
+	
+def compareLists(list1, list2):
+	if (len(list1) != len(list2)):
+		return False
+	
+	for index in range(len(list1)):
+		if (list1[index] != list2[index]):
+			return False
+	
+	return True
+	
+def getDifferences(list1, list2):
+	addLen = max(len(list1), len(list2)) - min(len(list1), len(list2))
+	diff = []
+	for i in range(min(len(list1), len(list2))):
+		diff.append(list1[i] == list2[i])
+	for i in range(addLen):
+		diff.append(None)
+	
+	return diff
+
+def allTrue(l):
+	for b in l:
+		if not b:
+			return False
+	return True
 
 
 if (__name__ == "__main__"):
-	legacyBlueprint = Card("Food man", 5, "C21", "Yes")
-	listBlueprint = Card("Urza's Blueprints", 277, "PLIST")
-
-	print(getPrice(legacyBlueprint))
-	print(getPrice(listBlueprint))
+	a = [True, True, True, True]
+	print(f"{a=}, {allTrue(a)}")
