@@ -1,19 +1,19 @@
-"""
-Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date*
-"""
-
 import time, pyodbc, datetime
 import getCards as gc
 from openpyxl import Workbook, load_workbook
+from os import getcwd
 
 # Final variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
 now = datetime.datetime.now()
 timeWait = 0.2
+dir = getcwd() + "\\"
 
 # Connection to database
-cnxn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\Dalton\Desktop\Magic-Pricing\\' + accessFilename + ";")
+driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
+pathStr = dir
+cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
 cursor = cnxn.cursor()
 cnxn.setdecoding(pyodbc.SQL_CHAR, encoding='utf-8')
 cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding='utf-8')
