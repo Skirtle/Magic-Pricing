@@ -1,4 +1,3 @@
-import time, pyodbc, datetime
 import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand
 from openpyxl import Workbook, load_workbook
 
@@ -60,7 +59,6 @@ while (sheet[f"A{row}"].value != None):
 card = rand.choice(cards)[0]
 dates, prices = getPriceOfCard(card)
 
-# plt.style.use('dark_background')
 fig, ax = plt.subplots()
 ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
 plt.xlabel("Date")

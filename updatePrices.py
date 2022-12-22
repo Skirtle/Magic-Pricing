@@ -42,7 +42,6 @@ print("Cards collected. Setting up excel file for new entries")
 # Get new column for prices
 column = 1
 while (sheet[f"{chr(ord('@') + column)}1"].value != None):
-	# print(sheet[f"A{column}"].value)
 	column += 1
 column = chr(ord('@') + column)
 sheet[f"{column}1"] = datetime.datetime(now.year, now.month, now.day)
@@ -64,12 +63,10 @@ for card in cards:
 		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
 		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
 		compared = gc.getDifferences(excelCardInfo, acessCardInfo)
-		# print(f"Checking card at A{rowNumber}, {sheet[f'A{rowNumber}'].value} == {card.name}")
 		if (gc.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 			print(f"\tUpdated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
-			# print(f"\t{card.name} found")
 			found = True
 			break
 		else:

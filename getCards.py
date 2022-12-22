@@ -27,7 +27,6 @@ def getCardInfo(card):
 def getPrice(card):
 	response = getCardInfo(card)
 	price = None
-	# price = response.json()["data"][0]["prices"]["usd" + ("_foil" if card.foil == "Yes" else ("_etched" if card.foil == "Etched" else ""))]
 	add = ""
 	if (card.foil == "Yes"):
 		add = "_foil"
@@ -41,9 +40,6 @@ def getPrice(card):
 		#print(card)
 		#print(response)
 		exit(f"Something went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
-	
-	"""if (price == None or card.foil == "Etched"):
-		price = response.json()["data"][0]["prices"]["usd_etched"]"""
 		
 	if (price == None):
 		print(card)
