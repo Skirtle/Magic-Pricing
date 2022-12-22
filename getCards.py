@@ -56,7 +56,7 @@ def compareLists(list1, list2):
 		return False
 	
 	for index in range(len(list1)):
-		if (list1[index] != list2[index]):
+		if (str(list1[index]) != str(list2[index])):
 			return False
 	
 	return True
@@ -65,7 +65,7 @@ def getDifferences(list1, list2):
 	addLen = max(len(list1), len(list2)) - min(len(list1), len(list2))
 	diff = []
 	for i in range(min(len(list1), len(list2))):
-		diff.append(list1[i] == list2[i])
+		diff.append(str(list1[i]) == str(list2[i]))
 	for i in range(addLen):
 		diff.append(None)
 	
