@@ -13,7 +13,7 @@ except:
 	workbook.save(filename = excelFilename)
 sheet = workbook.active
 
-card = ["Reckoner Bankbuster", 255, "Yes", "NEO"]
+card = ["Iymrith, Desert Doom", 290, "No", "AFR"]
 
 # Find card in sheet
 row = 2
@@ -46,12 +46,13 @@ for index in range(0, len(dates)):
 	else: prices[index] = sheet[f"{fixedColumn}{row}"].value
 
 fig, ax = plt.subplots()
-ax.plot(dates, prices)
+ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
 plt.xlabel("Date")
-plt.ylabel("Price ($)")
+plt.ylabel("Price")
 plt.title(f"{card[0]} price history")
 ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
 
+ax.yaxis.set_major_formatter('${x:1.2f}')
 fig.autofmt_xdate()
 
 plt.show()
