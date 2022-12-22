@@ -2,9 +2,8 @@ import json
 import requests
 from dataclasses import dataclass, field
 
-def jprint(obj):
-	text = json.dumps(obj, sort_keys=True, indent=4)
-	print(text)
+def jprint(obj, ind = 2):
+	print(json.dumps(obj, sort_keys=True, indent=ind))
 
 @dataclass(order=True)
 class Card:
@@ -82,5 +81,5 @@ def allTrue(l):
 if (__name__ == "__main__"):
 	chip = Card("The Reality Chip", 74,  "NEO")
 	chip.fullinfo = getCardInfo(chip).json()
-	jprint(chip.fullinfo)
+	jprint(chip.fullinfo, 2)
 	
