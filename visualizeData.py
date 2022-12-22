@@ -1,5 +1,7 @@
-import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand
+import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand, PySimpleGUI as sg
 from openpyxl import Workbook, load_workbook
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
 
 # Open excel workbook
 excelFilename = "MagicPrices.xlsx"
@@ -57,20 +59,83 @@ def getAllCards():
 	
 	return cards
 
+def returnData(item, list):
+    for index,value in enumerate(list):
+        if (item == list[index][0]):
+            return list[index][1][0], list[index][1][1]
+    return None, None
+
+def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
+    if canvas.children:
+        for child in canvas.winfo_children():
+            child.destroy()
+    if canvas_toolbar.children:
+        for child in canvas_toolbar.winfo_children():
+            child.destroy()
+    figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
+    figure_canvas_agg.draw()
+    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
+    toolbar.update()
+    figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
+
+class Toolbar(NavigationToolbar2Tk):
+    def __init__(self, *args, **kwargs):
+        super(Toolbar, self).__init__(*args, **kwargs)
+
 if __name__ == "__main__":
 	# Selected card
 	cards = getAllCards()
-	card = rand.choice(cards)[0]
-	dates, prices = getPriceOfCard(card)
+	cardNames = [card[0] for card in cards]
+	cardNames.sort(key = lambda x: x.name)
 
-	fig, ax = plt.subplots()
-	ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
-	plt.xlabel("Date")
-	plt.ylabel("Price")
-	plt.title(f"{card} price history")
-	ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
+	
+	layout = [
+		[sg.Combo(cardNames, readonly=True, key = "_CARD_", enable_events=True), sg.B("Plot"), sg.B('Exit')],
+		# [sg.T('Controls:')],
+		[sg.Canvas(key='controls_cv')],
+		[sg.T('History:')],
+		[sg.Column(
+			layout=[
+				[sg.Canvas(key='fig_cv',
+						# it's important that you set this size
+						size=(400 * 2, 400)
+						)]
+			],
+			background_color='#DAE0E6',
+			pad=(0, 0)
+		)],
+		[sg.B('Alive?')]
 
-	ax.yaxis.set_major_formatter('${x:1.2f}')
-	fig.autofmt_xdate()
+	]
+	window = sg.Window('Card Price History Viewer', layout)
 
-	plt.show()
+	selectedCard = None
+	while True:
+		event, values = window.read()
+		# An exit
+		if event in (sg.WIN_CLOSED, 'Exit'):
+			break
+		# Event for selecting a card via dropdown menu
+		elif event == "_CARD_":
+			selectedCard = values["_CARD_"]
+		# Event for Plot button
+		elif event == 'Plot':
+			# Create chart and fix size
+			fig, ax = plt.subplots()
+			DPI = fig.get_dpi()
+			fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
+			
+			# Plot data and fix labels
+			dates, prices = returnData(selectedCard, cards)
+			ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
+			plt.xlabel("Date")
+			plt.ylabel("Price")
+			plt.title(f"{selectedCard} price history")
+			ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
+			ax.yaxis.set_major_formatter('${x:1.2f}')
+			fig.autofmt_xdate()
+			
+			# Show data
+			draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+
+	window.close()
