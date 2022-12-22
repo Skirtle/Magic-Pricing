@@ -4,6 +4,7 @@ Record of my collection of cards (ever updating, never settled)
 # Update 1.1
 ## Done
 * Added visualizer for price history
+* Fixed bug with Village Rites (JP) (I had a newline character in there somewhere)
 ## To do
 * Create a UI to select from all cards from the excel sheet
 * Add more cards to database
