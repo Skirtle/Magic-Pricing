@@ -1,3 +1,7 @@
+"""
+Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date*
+"""
+
 import time, pyodbc, datetime
 import magicPrices as mp
 from openpyxl import Workbook, load_workbook
@@ -48,23 +52,30 @@ sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 print("Excel file set up. Retreiving prices from scryfall")
 price = 0
 rowNumber = 0
+addedCount = 0
 for card in cards:
+	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 	singlePrice = mp.getPrice(card)
 	
-	# Find already existing cell with CARDNAME
+	# Search for an already existing cell with card name, collector number, foiling, and set
 	rowNumber = 1
 	found = False
 	while (sheet[f"A{rowNumber}"].value != None):
+		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
+		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
+		compared = mp.getDifferences(excelCardInfo, acessCardInfo)
 		# print(f"Checking card at A{rowNumber}, {sheet[f'A{rowNumber}'].value} == {card.name}")
-		if (sheet[f"A{rowNumber}"].value == card.name and str(sheet[f"B{rowNumber}"].value) == str(card.cn) and sheet[f"C{rowNumber}"].value == card.foil and sheet[f"D{rowNumber}"].value == card.set):
+		if (mp.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
+			print(f"\tUpdated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
 			# print(f"\t{card.name} found")
 			found = True
 			break
 		else:
 			rowNumber += 1
-			
+	
+	# Went through all cards in sheet and card was not found. Add at latest checked rowNumber
 	if (not found):
 		sheet[f"A{rowNumber}"] = card.name
 		sheet[f"B{rowNumber}"] = card.cn
@@ -72,10 +83,12 @@ for card in cards:
 		sheet[f"D{rowNumber}"] = card.set
 		sheet[f"{column}{rowNumber}"] = singlePrice
 		sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
+		print(f"\tAdded {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
+		addedCount += 1
 	rowNumber += 1
-	print(f"\tAdded {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
 	time.sleep(timeWait)
-print("All cards added to excel, closing files.")
+print(f"Added {addedCount} new cards")
+print("All cards added and updated, closing files")
 
 # Close everything
 cursor.close()
