@@ -3,7 +3,7 @@ Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Dat
 """
 
 import time, pyodbc, datetime
-import magicPrices as mp
+import getCards as gc
 from openpyxl import Workbook, load_workbook
 
 # Final variables
@@ -36,7 +36,7 @@ sheet["D1"] = "Set"
 print("Accessing database for cards")
 cursor.execute("select * from Cards")
 rows = cursor.fetchall()
-cards = [mp.Card(c[0], c[1], c[2], c[3]) for c in rows]
+cards = [gc.Card(c[0], c[1], c[2], c[3]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
@@ -55,7 +55,7 @@ rowNumber = 0
 addedCount = 0
 for card in cards:
 	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-	singlePrice = mp.getPrice(card)
+	singlePrice = gc.getPrice(card)
 	
 	# Search for an already existing cell with card name, collector number, foiling, and set
 	rowNumber = 1
@@ -63,9 +63,9 @@ for card in cards:
 	while (sheet[f"A{rowNumber}"].value != None):
 		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
 		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
-		compared = mp.getDifferences(excelCardInfo, acessCardInfo)
+		compared = gc.getDifferences(excelCardInfo, acessCardInfo)
 		# print(f"Checking card at A{rowNumber}, {sheet[f'A{rowNumber}'].value} == {card.name}")
-		if (mp.allTrue(compared)):
+		if (gc.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 			print(f"\tUpdated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
