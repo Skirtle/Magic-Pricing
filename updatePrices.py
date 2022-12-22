@@ -7,7 +7,7 @@ from os import getcwd
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
 now = datetime.datetime.now()
-timeWait = 0.2
+timeWait = 0.1
 dir = getcwd() + "\\"
 
 # Connection to database
