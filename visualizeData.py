@@ -1,9 +1,8 @@
 import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand
 from openpyxl import Workbook, load_workbook
 
-excelFilename = "MagicPrices.xlsx"
-
 # Open excel workbook
+excelFilename = "MagicPrices.xlsx"
 workbook = None
 try:
 	workbook = load_workbook(filename = excelFilename)
@@ -45,28 +44,33 @@ def getPriceOfCard(card):
 	
 	return (dates, prices)
 
-# List with all cards and price histories for those cards
-cards =[]
-row = 2
-while (sheet[f"A{row}"].value != None):
-	# Name, collector number, foiling type, set code
-	newCard = gc.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
-	cards.append([newCard, getPriceOfCard(newCard)])
+def getAllCards():
+	# List with all cards and price histories for those cards
+	cards =[]
+	row = 2
+	while (sheet[f"A{row}"].value != None):
+		# Name, collector number, foiling type, set code
+		newCard = gc.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
+		cards.append([newCard, getPriceOfCard(newCard)])
+		
+		row += 1
 	
-	row += 1
+	return cards
 
-# Selected card
-card = rand.choice(cards)[0]
-dates, prices = getPriceOfCard(card)
+if __name__ == "__main__":
+	# Selected card
+	cards = getAllCards()
+	card = rand.choice(cards)[0]
+	dates, prices = getPriceOfCard(card)
 
-fig, ax = plt.subplots()
-ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
-plt.xlabel("Date")
-plt.ylabel("Price")
-plt.title(f"{card} price history")
-ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
+	fig, ax = plt.subplots()
+	ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
+	plt.xlabel("Date")
+	plt.ylabel("Price")
+	plt.title(f"{card} price history")
+	ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
 
-ax.yaxis.set_major_formatter('${x:1.2f}')
-fig.autofmt_xdate()
+	ax.yaxis.set_major_formatter('${x:1.2f}')
+	fig.autofmt_xdate()
 
-plt.show()
+	plt.show()
