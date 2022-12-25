@@ -1,4 +1,4 @@
-import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand, PySimpleGUI as sg
+import MagicModule as mm, numpy as np, matplotlib.pyplot as plt, PySimpleGUI as sg
 from openpyxl import Workbook, load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
@@ -18,8 +18,8 @@ def getPriceOfCard(card):
 	row = 2
 	while (sheet[f"A{row}"].value != None):
 		excelCardInfo = [sheet[f"A{row}"].value, str(sheet[f"B{row}"].value), sheet[f"C{row}"].value, sheet[f"D{row}"].value]
-		compared = gc.getDifferences(excelCardInfo, [card.name, card.cn, card.foil, card.set])
-		if (gc.allTrue(compared)): break
+		compared = mm.getDifferences(excelCardInfo, [card.name, card.cn, card.foil, card.set])
+		if (mm.allTrue(compared)): break
 		row += 1
 	else:
 		print(card)
@@ -52,7 +52,7 @@ def getAllCards():
 	row = 2
 	while (sheet[f"A{row}"].value != None):
 		# Name, collector number, foiling type, set code
-		newCard = gc.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
+		newCard = mm.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
 		cards.append([newCard, getPriceOfCard(newCard)])
 		
 		row += 1

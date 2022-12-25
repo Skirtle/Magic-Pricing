@@ -37,7 +37,6 @@ class Card:
 	def __str__(self):
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
-
 def getCardInfo(card):
 	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:{card.cn}%20set:{card.set}%20game:paper')
 
@@ -56,7 +55,7 @@ def getPrice(card):
 	except:
 		#print(card)
 		#print(response)
-		exit(f"Something went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
+		exit(f"\nSomething went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
 		
 	if (price == None):
 		print(card)
@@ -89,7 +88,6 @@ def allTrue(l):
 		if not b:
 			return False
 	return True
-
 
 if (__name__ == "__main__"):
 	t1 = 5

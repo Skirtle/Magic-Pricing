@@ -1,5 +1,5 @@
 import time, pyodbc, sys
-import getCards as gc, numpy as np, datetime as dt
+import MagicModule as mm, numpy as np, datetime as dt
 from openpyxl import Workbook, load_workbook
 from os import getcwd
 
@@ -31,7 +31,7 @@ if ("-stop" in args or "-s" in args):
 	except IndexError: exit("InputError: Missing number after " + args[stopInd])
 	except ValueError: exit("NumberError: Input after " + args[stopInd] + " must be a number")
 
-if ("-sql" or "-q" in args):
+if ("-sql" in args or "-q" in args):
 	try: sqlInd = args.index("-sql")
 	except ValueError: sqlInd = args.index("-q")
 
@@ -40,6 +40,9 @@ if ("-sql" or "-q" in args):
 
 if ("-close" in args or "-c" in args): autoClose = False
 else: autoClose = True
+
+if ("-print" in args or "-p" in args): printFlag = True
+else: printFlag = False
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
@@ -67,7 +70,7 @@ sheet["D1"] = "Set"
 print("Accessing database for cards")
 cursor.execute(sqlArg) # SQL here
 rows = cursor.fetchall()
-cards = [gc.Card(c[0], c[1], c[2], c[3]) for c in rows]
+cards = [mm.Card(c[0], c[1], c[2], c[3]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
@@ -91,10 +94,10 @@ for card in cards:
 	# Percent done
 	perc = round((done / earlyStop) * 100, 2)
 	eta = np.average(avgWaitTimes) * (earlyStop - done)
-	eta, unit = gc.convTime(eta)
+	eta, unit = mm.convTime(eta)
 
 	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-	singlePrice = gc.getPrice(card)
+	singlePrice = mm.getPrice(card)
 	
 	# Search for an already existing cell with card name, collector number, foiling, and set
 	rowNumber = 1
@@ -102,12 +105,14 @@ for card in cards:
 	while (sheet[f"A{rowNumber}"].value != None):
 		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
 		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
-		compared = gc.getDifferences(excelCardInfo, acessCardInfo)
-		if (gc.allTrue(compared)):
+		compared = mm.getDifferences(excelCardInfo, acessCardInfo)
+		if (mm.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
+			shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
 			line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
-			print(line + " " * len(line), flush = True, end = "")
+			if (printFlag): print(line + " " * len(line), flush = True, end = "")
+			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 			found = True
 			break
 		else:
@@ -121,8 +126,10 @@ for card in cards:
 		sheet[f"D{rowNumber}"] = card.set
 		sheet[f"{column}{rowNumber}"] = singlePrice
 		sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
+		shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
 		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
-		print(line + " " * len(line), flush = True, end = "")
+		if (printFlag): print(line + " " * len(line), flush = True, end = "")
+		else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 		addedCount += 1
 	
 	rowNumber += 1
