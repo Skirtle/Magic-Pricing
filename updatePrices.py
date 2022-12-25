@@ -1,12 +1,33 @@
-import time, pyodbc, datetime
-import getCards as gc, numpy as np
+import time, pyodbc, sys
+import getCards as gc, numpy as np, datetime as dt
 from openpyxl import Workbook, load_workbook
 from os import getcwd
 
 # Final variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
-now = datetime.datetime.now()
+# Filename if inputted from command line
+# -name/n for filename, -stop/s for early stop, -close/c for auto close
+args = sys.argv
+if ("-name" in args or "-n" in args):
+	try: nameInd = args.index("-name")
+	except ValueError: nameInd = args.index("-n")
+
+	try: excelFilename = args[nameInd + 1]
+	except IndexError: exit("InputError: Missing name after " + args[nameInd])
+
+if ("-stop" in args or "-s" in args):
+	try: stopInd = args.index("-stop")
+	except ValueError: stopInd = args.index("-s")
+
+	try: earlyStop = int(args[stopInd + 1])
+	except IndexError: exit("InputError: Missing number after " + args[stopInd])
+	except ValueError: exit("NumberError: Input after " + args[stopInd] + " must be a number")
+
+if ("-close" in args or "-c" in args): autoClose = False
+else: autoClose = True
+
+now = dt.datetime.now()
 timeWait = 0.1
 dir = getcwd() + "\\"
 encoding = "latin-1"
@@ -45,31 +66,23 @@ column = 1
 while (sheet[f"{chr(ord('@') + column)}1"].value != None):
 	column += 1
 column = chr(ord('@') + column)
-sheet[f"{column}1"] = datetime.datetime(now.year, now.month, now.day)
+sheet[f"{column}1"] = dt.datetime(now.year, now.month, now.day)
 sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 
 # Get prices
-print("Excel file set up. Retreiving prices from scryfall")
 rowNumber = 0
 addedCount = 0
 done = 0
 avgWaitTimes = [timeWait]
+if (not earlyStop): earlyStop = len(cards)
+print(f"Excel file set up. Retreiving prices from scryfall ({earlyStop} cards)")
 for card in cards:
+	if (done >= earlyStop): break
 	start = time.time()
 	# Percent done
-	perc = round((done / len(cards)) * 100, 2)
-	eta = np.average(avgWaitTimes) * (len(cards) - done)
-	if (eta >= 3600):
-		unit = "hours"
-		eta /= 3600
-		eta = round(eta, 2)
-	elif (eta >= 60):
-		unit = "minutes"
-		eta /= 60
-		eta = round(eta, 2)
-	else:
-		unit = "seconds"
-		eta = round(eta, 0)
+	perc = round((done / earlyStop) * 100, 2)
+	eta = np.average(avgWaitTimes) * (earlyStop - done)
+	eta, unit = gc.convTime(eta)
 
 	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 	singlePrice = gc.getPrice(card)
@@ -84,7 +97,7 @@ for card in cards:
 		if (gc.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-			line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, {eta = } {unit}"
+			line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
 			print(line + " " * len(line), flush = True, end = "")
 			found = True
 			break
@@ -102,6 +115,7 @@ for card in cards:
 		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, {eta = } {unit}"
 		print(line + " " * len(line), flush = True, end = "")
 		addedCount += 1
+	
 	rowNumber += 1
 	done += 1
 	time.sleep(timeWait)
@@ -116,4 +130,4 @@ cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
 print("All files closed and saved. You may exit this program and access the updated files now")
-input()
+if (autoClose): input()

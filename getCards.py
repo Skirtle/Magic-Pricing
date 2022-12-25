@@ -2,6 +2,23 @@ import json
 import requests
 from dataclasses import dataclass, field
 
+def convTime(t):
+	if (t >= 3600):
+		unit = "hours"
+		t /= 3600
+		t = round(t, 2)
+	elif (t >= 60):
+		unit = "minutes"
+		t /= 60
+		t = round(t, 2)
+	else:
+		unit = "seconds"
+		t = round(t, 0)
+	split = str(t).split(".")
+	if (len(split) == 1): dec = "00"
+	else: dec = split[1].ljust(2, '0')
+	return [split[0] + "." + dec, unit]
+
 def jprint(obj, ind = 2):
 	print(json.dumps(obj, sort_keys=True, indent=ind))
 
@@ -75,7 +92,10 @@ def allTrue(l):
 
 
 if (__name__ == "__main__"):
-	chip = Card("The Reality Chip", 74,  "NEO")
-	chip.fullinfo = getCardInfo(chip).json()
-	jprint(chip.fullinfo, 2)
+	t1 = 5
+	t2 = 6.1
+	t3 = 5.12
+	print(convTime(t1)[0])
+	print(convTime(t2)[0])
+	print(convTime(t3)[0])
 	
