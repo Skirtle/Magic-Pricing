@@ -6,7 +6,10 @@ from os import getcwd
 # Final variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
-# Filename if inputted from command line
+now = dt.datetime.now()
+timeWait = 0.1
+dir = getcwd() + "\\"
+encoding = "latin-1"
 # -name/n for filename, -stop/s for early stop, -close/c for auto close
 args = sys.argv
 if ("-name" in args or "-n" in args):
@@ -15,6 +18,8 @@ if ("-name" in args or "-n" in args):
 
 	try: excelFilename = args[nameInd + 1]
 	except IndexError: exit("InputError: Missing name after " + args[nameInd])
+
+	if (".xlsx" not in excelFilename): excelFilename += ".xlsx"
 
 if ("-stop" in args or "-s" in args):
 	try: stopInd = args.index("-stop")
@@ -26,11 +31,6 @@ if ("-stop" in args or "-s" in args):
 
 if ("-close" in args or "-c" in args): autoClose = False
 else: autoClose = True
-
-now = dt.datetime.now()
-timeWait = 0.1
-dir = getcwd() + "\\"
-encoding = "latin-1"
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
