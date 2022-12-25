@@ -10,7 +10,9 @@ now = dt.datetime.now()
 timeWait = 0.1
 dir = getcwd() + "\\"
 encoding = "latin-1"
-# -name/n for filename, -stop/s for early stop, -close/c for auto close
+sqlArg = "select * from Cards"
+earlyStop = None
+# -name/n for filename, -stop/s for early stop, -close/c for auto close, -sql/q for custom sql
 args = sys.argv
 if ("-name" in args or "-n" in args):
 	try: nameInd = args.index("-name")
@@ -28,6 +30,13 @@ if ("-stop" in args or "-s" in args):
 	try: earlyStop = int(args[stopInd + 1])
 	except IndexError: exit("InputError: Missing number after " + args[stopInd])
 	except ValueError: exit("NumberError: Input after " + args[stopInd] + " must be a number")
+
+if ("-sql" or "-q" in args):
+	try: sqlInd = args.index("-sql")
+	except ValueError: sqlInd = args.index("-q")
+
+	try: sqlArg = args[sqlInd + 1]
+	except IndexError: exit("InputError: Missing argument after " + args[sqlInd])
 
 if ("-close" in args or "-c" in args): autoClose = False
 else: autoClose = True
@@ -56,7 +65,7 @@ sheet["D1"] = "Set"
 
 # Get all cards
 print("Accessing database for cards")
-cursor.execute("select * from Cards")
+cursor.execute(sqlArg) # SQL here
 rows = cursor.fetchall()
 cards = [gc.Card(c[0], c[1], c[2], c[3]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
@@ -112,7 +121,7 @@ for card in cards:
 		sheet[f"D{rowNumber}"] = card.set
 		sheet[f"{column}{rowNumber}"] = singlePrice
 		sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, {eta = } {unit}"
+		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
 		print(line + " " * len(line), flush = True, end = "")
 		addedCount += 1
 	
