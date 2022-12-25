@@ -1,5 +1,5 @@
 import time, pyodbc, datetime
-import getCards as gc
+import getCards as gc, numpy as np
 from openpyxl import Workbook, load_workbook
 from os import getcwd
 
@@ -9,15 +9,16 @@ excelFilename = "MagicPrices.xlsx"
 now = datetime.datetime.now()
 timeWait = 0.1
 dir = getcwd() + "\\"
+encoding = "latin-1"
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
 pathStr = dir
 cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
 cursor = cnxn.cursor()
-cnxn.setdecoding(pyodbc.SQL_CHAR, encoding='utf-8')
-cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding='utf-8')
-cnxn.setencoding(encoding='utf-8')
+cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
+cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
+cnxn.setencoding(encoding=encoding)
 
 # Open excel workbook
 workbook = None
@@ -49,10 +50,27 @@ sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 
 # Get prices
 print("Excel file set up. Retreiving prices from scryfall")
-price = 0
 rowNumber = 0
 addedCount = 0
+done = 0
+avgWaitTimes = [timeWait]
 for card in cards:
+	start = time.time()
+	# Percent done
+	perc = round((done / len(cards)) * 100, 2)
+	eta = np.average(avgWaitTimes) * (len(cards) - done)
+	if (eta >= 3600):
+		unit = "hours"
+		eta /= 3600
+		eta = round(eta, 2)
+	elif (eta >= 60):
+		unit = "minutes"
+		eta /= 60
+		eta = round(eta, 2)
+	else:
+		unit = "seconds"
+		eta = round(eta, 0)
+
 	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 	singlePrice = gc.getPrice(card)
 	
@@ -66,7 +84,8 @@ for card in cards:
 		if (gc.allTrue(compared)):
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-			print(f"\tUpdated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
+			line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, {eta = } {unit}"
+			print(line + " " * len(line), flush = True, end = "")
 			found = True
 			break
 		else:
@@ -80,10 +99,15 @@ for card in cards:
 		sheet[f"D{rowNumber}"] = card.set
 		sheet[f"{column}{rowNumber}"] = singlePrice
 		sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-		print(f"\tAdded {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}")
+		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, {eta = } {unit}"
+		print(line + " " * len(line), flush = True, end = "")
 		addedCount += 1
 	rowNumber += 1
+	done += 1
 	time.sleep(timeWait)
+	end = time.time()
+	avgWaitTimes.append(end - start)
+
 print(f"Added {addedCount} new cards")
 print("All cards added and updated, closing files")
 
