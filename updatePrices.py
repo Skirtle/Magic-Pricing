@@ -58,8 +58,7 @@ cnxn.setencoding(encoding=encoding)
 
 # Open excel workbook
 workbook = None
-try:
-	workbook = load_workbook(filename = excelFilename)
+try: workbook = load_workbook(filename = excelFilename)
 except:
 	workbook = Workbook()
 	workbook.save(filename = excelFilename)
@@ -82,8 +81,7 @@ print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
 column = 1
-while (sheet[f"{mm.numToCol(column)}1"].value != None):
-	column += 1
+while (sheet[f"{mm.numToCol(column)}1"].value != None): column += 1
 column = mm.numToCol(column)
 sheet[f"{column}1"] = dt.datetime(now.year, now.month, now.day)
 sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
@@ -124,8 +122,7 @@ for card in cards:
 				else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 				found = True
 				break
-			else:
-				rowNumber += 1
+			else: rowNumber += 1
 		
 		# Went through all cards in sheet and card was not found. Add at latest checked rowNumber
 		if (not found):
@@ -147,15 +144,13 @@ for card in cards:
 		percStr = f"\t[{perc}%] "
 		
 		# Print short information
-		if (not printFlag):
-			print("\r" + percStr, end = "", flush = True)
+		if (not printFlag): print("\r" + percStr, end = "", flush = True)
 		# Print full information
 		else:
 			# Cards do not equal
 			if (not same):
 				fLine = percStr + line
 				print(fLine, end = "\n", flush = True)
-			pass
 		
 		if (not same): file.write(line + "\n")
 	

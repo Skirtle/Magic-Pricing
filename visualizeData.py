@@ -9,8 +9,7 @@ workbook = None
 try:
 	workbook = load_workbook(filename = excelFilename)
 except:
-	workbook = Workbook()
-	workbook.save(filename = excelFilename)
+	exit(f"{excelFilename} not found")
 sheet = workbook.active
 
 def getPriceOfCard(card):
@@ -38,9 +37,7 @@ def getPriceOfCard(card):
 	prices = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1))) # Y
 	for index in range(0, len(dates)):
 		fixedColumn = chr(index + ord(startColumn))
-		excelDate = sheet[f"{fixedColumn}1"].value
-		fixedDate = np.datetime64(excelDate)
-		dates[index] = fixedDate
+		dates[index] = np.datetime64(sheet[f"{fixedColumn}1"].value)
 		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0
 		else: prices[index] = sheet[f"{fixedColumn}{row}"].value
 	
