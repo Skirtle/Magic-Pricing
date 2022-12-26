@@ -29,6 +29,7 @@ class Card:
 	cn: int
 	set: str
 	foil: str = "No"
+	quantity: int = 1
 	fullinfo: dict = field(default_factory=dict)
 	
 	def __post_init__(self):

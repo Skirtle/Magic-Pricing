@@ -13,7 +13,6 @@ dir = getcwd() + "\\"
 encoding = "latin-1"
 sqlArg = "select * from Cards"
 earlyStop = None
-# -name/n for filename, -stop/s for early stop, -close/c for auto close, -sql/q for custom sql
 args = sys.argv
 if ("-name" in args or "-n" in args):
 	try: nameInd = args.index("-name")
@@ -48,6 +47,15 @@ else: printFlag = False
 if ("-validate" in args or "-v" in args): validation = True
 else: validation = False
 
+if ("-export" in args or "-e" in args or "-exportOnly" in args or "-eo" in args): 
+	exportFlag = True
+	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
+	else: skipExcel = False
+else: 
+	exportFlag = False
+	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
+	else: skipExcel = False
+
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
 cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
@@ -68,15 +76,17 @@ sheet["B1"] = "CN"
 sheet["C1"] = "Foiling"
 sheet["D1"] = "Set"
 
-# Open validation file
-if (validation): file = open(validationFilename, "w")
-else: file = None
+# Open text files
+if (validation): validationFile = open(validationFilename, "w")
+else: validationFile = None
+if (exportFlag): exportFile = open("export.csv", "w")
+else: exportFile = None
 
 # Get all cards
 print("Accessing database for cards")
 cursor.execute(sqlArg) # SQL here
 rows = cursor.fetchall()
-cards = [mm.Card(c[0], c[1], c[2], c[3]) for c in rows]
+cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
@@ -86,6 +96,17 @@ column = mm.numToCol(column)
 sheet[f"{column}1"] = dt.datetime(now.year, now.month, now.day)
 sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 
+# Export to csv
+if (exportFlag):
+	print("Exporting to export.csv")
+	for card in cards:
+		if (card.foil == "No"): foiling = "normal"
+		elif (card.foil == "Etched"): foiling = "etch"
+		else: foiling = "foil"
+		exportFile.write(f"\"{card.name}\", {card.cn}, {card.set}, {foiling}, {card.quantity}\n")
+	print("Done exporting")
+	exportFile.close()
+
 # Get prices
 rowNumber = 0
 addedCount = 0
@@ -94,6 +115,8 @@ avgWaitTimes = [timeWait]
 if (not earlyStop): earlyStop = len(cards)
 print(f"Excel file set up. Retreiving prices from scryfall ({earlyStop} cards), column {column}")
 for card in cards:
+	if (skipExcel and not validation): break
+
 	if (done >= earlyStop): break
 	start = time.time()
 	# Percent done
@@ -101,7 +124,7 @@ for card in cards:
 	eta = np.average(avgWaitTimes) * (earlyStop - done)
 	eta, unit = mm.convTime(eta)
 	
-	if (not validation):
+	if (not validation or skipExcel):
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 		singlePrice = mm.getPrice(card)
@@ -138,7 +161,7 @@ for card in cards:
 			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 			addedCount += 1
 	
-	else:
+	elif (validation):
 		same, trueName = mm.validate(card)
 		line = f"Record shows '{card}' but got {trueName}"
 		percStr = f"\t[{perc}%] "
@@ -152,7 +175,7 @@ for card in cards:
 				fLine = percStr + line
 				print(fLine, end = "\n", flush = True)
 		
-		if (not same): file.write(line + "\n")
+		if (not same): validationFile.write(line + "\n")
 	
 	rowNumber += 1
 	done += 1
@@ -168,6 +191,6 @@ if (not validation):
 cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
-if (validation): file.close()
+if (validation): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
 if (autoClose): input()
