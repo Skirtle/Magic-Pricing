@@ -1,3 +1,5 @@
 *.laccdb
 __pycache__
 validations.txt
+DFC.txt
+typos.txt

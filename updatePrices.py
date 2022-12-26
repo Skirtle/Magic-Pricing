@@ -3,7 +3,7 @@ import MagicModule as mm, numpy as np, datetime as dt
 from openpyxl import Workbook, load_workbook
 from os import getcwd
 
-# Final variables
+# Default variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
 validationFilename = "validations.txt"
@@ -50,7 +50,6 @@ else: validation = False
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
-pathStr = dir
 cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
 cursor = cnxn.cursor()
 cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)

@@ -98,23 +98,17 @@ def validate(card):
 		return False, "ERROR"
 	return actual == card.name, actual
 
-_A_UPPERCASE = ord('A')
-_ALPHABET_SIZE = 26
-
-
 def _decompose(number):
 	# This function and numToCol() found on https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
     number -= 1
-    if number < _ALPHABET_SIZE:
-        yield number
+    if number < 26: yield number
     else:
-        number, remainder = divmod(number, _ALPHABET_SIZE)
+        number, remainder = divmod(number, 26)
         yield from _decompose(number)
         yield remainder
 
-
 def numToCol(number):
-    return ''.join(chr(_A_UPPERCASE + part) for part in _decompose(number))
+    return ''.join(chr(ord('A') + part) for part in _decompose(number))
 
 if (__name__ == "__main__"):
 	print(numToCol(703 + 26))
