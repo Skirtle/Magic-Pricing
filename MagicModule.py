@@ -89,11 +89,16 @@ def allTrue(l):
 			return False
 	return True
 
+def validate(card):
+	info = getCardInfo(card).json()
+	try:
+		actual = info["data"][0]["name"]
+	except KeyError:
+		print(f"KeyError: Something went from with {card}")
+		return False, "ERROR"
+	return actual == card.name, actual
+
 if (__name__ == "__main__"):
-	t1 = 5
-	t2 = 6.1
-	t3 = 5.12
-	print(convTime(t1)[0])
-	print(convTime(t2)[0])
-	print(convTime(t3)[0])
+	c = Card("Urza's Saga", 259, "MH2")
+	print(validate(c))
 	

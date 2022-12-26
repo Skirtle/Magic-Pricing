@@ -6,6 +6,7 @@ from os import getcwd
 # Final variables
 accessFilename = "Magic.accdb"
 excelFilename = "MagicPrices.xlsx"
+validationFilename = "validations.txt"
 now = dt.datetime.now()
 timeWait = 0.1
 dir = getcwd() + "\\"
@@ -44,6 +45,9 @@ else: autoClose = True
 if ("-print" in args or "-p" in args): printFlag = True
 else: printFlag = False
 
+if ("-validate" in args or "-v" in args): validation = True
+else: validation = False
+
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
 pathStr = dir
@@ -65,6 +69,10 @@ sheet["A1"] = "Card"
 sheet["B1"] = "CN"
 sheet["C1"] = "Foiling"
 sheet["D1"] = "Set"
+
+# Open validation file
+if (validation): file = open(validationFilename, "w")
+else: file = None
 
 # Get all cards
 print("Accessing database for cards")
@@ -95,42 +103,61 @@ for card in cards:
 	perc = round((done / earlyStop) * 100, 2)
 	eta = np.average(avgWaitTimes) * (earlyStop - done)
 	eta, unit = mm.convTime(eta)
-
-	""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-	singlePrice = mm.getPrice(card)
 	
-	# Search for an already existing cell with card name, collector number, foiling, and set
-	rowNumber = 1
-	found = False
-	while (sheet[f"A{rowNumber}"].value != None):
-		excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
-		acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
-		compared = mm.getDifferences(excelCardInfo, acessCardInfo)
-		if (mm.allTrue(compared)):
+	if (not validation):
+		# Not validating
+		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
+		singlePrice = mm.getPrice(card)
+		
+		# Search for an already existing cell with card name, collector number, foiling, and set
+		rowNumber = 1
+		found = False
+		while (sheet[f"A{rowNumber}"].value != None):
+			excelCardInfo = [sheet[f"A{rowNumber}"].value, str(sheet[f"B{rowNumber}"].value), sheet[f"C{rowNumber}"].value, sheet[f"D{rowNumber}"].value]
+			acessCardInfo = [card.name, str(card.cn), card.foil, card.set]
+			compared = mm.getDifferences(excelCardInfo, acessCardInfo)
+			if (mm.allTrue(compared)):
+				sheet[f"{column}{rowNumber}"] = singlePrice
+				sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
+				shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
+				line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
+				if (printFlag): print(line + " " * len(line), flush = True, end = "")
+				else: print(shortLine + " " * len(shortLine), flush = True, end = "")
+				found = True
+				break
+			else:
+				rowNumber += 1
+		
+		# Went through all cards in sheet and card was not found. Add at latest checked rowNumber
+		if (not found):
+			sheet[f"A{rowNumber}"] = card.name
+			sheet[f"B{rowNumber}"] = card.cn
+			sheet[f"C{rowNumber}"] = card.foil
+			sheet[f"D{rowNumber}"] = card.set
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 			shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
-			line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
+			line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
 			if (printFlag): print(line + " " * len(line), flush = True, end = "")
 			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
-			found = True
-			break
+			addedCount += 1
+	else:
+		same, trueName = mm.validate(card)
+		line = f"Record shows '{card}' but got {trueName}"
+		percStr = f"\t[{perc}%] "
+		
+		# Print short information
+		if (not printFlag):
+			print("\r" + percStr, end = "", flush = True)
+		# Print full information
 		else:
-			rowNumber += 1
-	
-	# Went through all cards in sheet and card was not found. Add at latest checked rowNumber
-	if (not found):
-		sheet[f"A{rowNumber}"] = card.name
-		sheet[f"B{rowNumber}"] = card.cn
-		sheet[f"C{rowNumber}"] = card.foil
-		sheet[f"D{rowNumber}"] = card.set
-		sheet[f"{column}{rowNumber}"] = singlePrice
-		sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-		shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
-		line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
-		if (printFlag): print(line + " " * len(line), flush = True, end = "")
-		else: print(shortLine + " " * len(shortLine), flush = True, end = "")
-		addedCount += 1
+			# Cards do not equal
+			if (not same):
+				fLine = percStr + line
+				print(fLine, end = "\n", flush = True)
+			pass
+		
+		if (not same): file.write(line + "\n")
 	
 	rowNumber += 1
 	done += 1
@@ -138,12 +165,14 @@ for card in cards:
 	end = time.time()
 	avgWaitTimes.append(end - start)
 
-print(f"Added {addedCount} new cards")
-print("All cards added and updated, closing files")
+if (not validation):
+	print(f"Added {addedCount} new cards")
+	print("All cards added and updated, closing files")
 
 # Close everything
 cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
-print("All files closed and saved. You may exit this program and access the updated files now")
+file.close()
+print("All files closed and saved. You may exit this program and access the files now")
 if (autoClose): input()
