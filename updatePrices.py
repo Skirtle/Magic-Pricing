@@ -83,9 +83,9 @@ print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
 column = 1
-while (sheet[f"{chr(ord('@') + column)}1"].value != None):
+while (sheet[f"{mm.numToCol(column)}1"].value != None):
 	column += 1
-column = chr(ord('@') + column)
+column = mm.numToCol(column)
 sheet[f"{column}1"] = dt.datetime(now.year, now.month, now.day)
 sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 
@@ -95,7 +95,7 @@ addedCount = 0
 done = 0
 avgWaitTimes = [timeWait]
 if (not earlyStop): earlyStop = len(cards)
-print(f"Excel file set up. Retreiving prices from scryfall ({earlyStop} cards)")
+print(f"Excel file set up. Retreiving prices from scryfall ({earlyStop} cards), column {column}")
 for card in cards:
 	if (done >= earlyStop): break
 	start = time.time()
@@ -141,6 +141,7 @@ for card in cards:
 			if (printFlag): print(line + " " * len(line), flush = True, end = "")
 			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 			addedCount += 1
+	
 	else:
 		same, trueName = mm.validate(card)
 		line = f"Record shows '{card}' but got {trueName}"
@@ -173,6 +174,6 @@ if (not validation):
 cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
-file.close()
+if (validation): file.close()
 print("All files closed and saved. You may exit this program and access the files now")
 if (autoClose): input()
