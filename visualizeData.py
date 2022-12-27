@@ -82,7 +82,8 @@ class Toolbar(NavigationToolbar2Tk):
 if __name__ == "__main__":
 	# Selected card
 	cards = getAllCards()
-	cardNames = [card[0] for card in cards]
+	basics = ["Plains", "Island", "Swamp", "Mountain", "Forest"]
+	cardNames = [card[0] for card in cards if card.name not in basics]
 	cardNames.sort(key = lambda x: x.name)
 
 	
