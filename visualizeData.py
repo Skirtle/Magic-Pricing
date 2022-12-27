@@ -89,19 +89,9 @@ if __name__ == "__main__":
 	
 	layout = [
 		[sg.Combo(cardNames, readonly=True, key = "_CARD_", enable_events=True), sg.B("Plot"), sg.B('Exit')],
-		# [sg.T('Controls:')],
 		[sg.Canvas(key='controls_cv')],
 		[sg.T('History:')],
-		[sg.Column(
-			layout=[
-				[sg.Canvas(key='fig_cv',
-						# it's important that you set this size
-						size=(400 * 2, 400)
-						)]
-			],
-			background_color='#DAE0E6',
-			pad=(0, 0)
-		)],
+		[sg.Column(layout=[[sg.Canvas(key='fig_cv', size=(400 * 2, 400))]], background_color='#DAE0E6', pad=(0, 0))],
 		[sg.B('Alive?')]
 
 	]
