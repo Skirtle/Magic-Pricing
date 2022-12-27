@@ -26,7 +26,7 @@ def jprint(obj, ind = 2):
 class Card:
 	sort_index: int = field(init=False, repr=False)
 	name: str
-	cn: int
+	cn: str
 	set: str
 	foil: str = "No"
 	quantity: int = 1
@@ -39,7 +39,7 @@ class Card:
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
 def getCardInfo(card):
-	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:{card.cn}%20set:{card.set}%20game:paper')
+	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
 
 def getPrice(card):
 	response = getCardInfo(card)
@@ -112,5 +112,5 @@ def numToCol(number):
     return ''.join(chr(ord('A') + part) for part in _decompose(number))
 
 if (__name__ == "__main__"):
-	print(numToCol(703 + 26))
+	print(getCardInfo(Card("Even the Score", "42s", "PSNC", foil = True)))
 	
