@@ -39,7 +39,11 @@ class Card:
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
 def getCardInfo(card):
-	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
+	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
+	if (req.json()["object"] == "error"):
+		req = requests.get(f"https://scryfall.com/search?q=cn%3D{card.cn}+set%3A{card.set}")
+	
+	return req
 
 def getPrice(card):
 	response = getCardInfo(card)
@@ -112,5 +116,6 @@ def numToCol(number):
     return ''.join(chr(ord('A') + part) for part in _decompose(number))
 
 if (__name__ == "__main__"):
-	print(getCardInfo(Card("Even the Score", "42s", "PSNC", foil = True)))
+	# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
+	print(getCardInfo(Card("Megantic Sliver", "185", "PM14", foil = True)))
 	
