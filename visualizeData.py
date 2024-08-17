@@ -83,7 +83,7 @@ if __name__ == "__main__":
 	# Selected card
 	cards = getAllCards()
 	basics = ["Plains", "Island", "Swamp", "Mountain", "Forest"]
-	cardNames = [card[0] for card in cards if card.name not in basics]
+	cardNames = [card[0] for card in cards]
 	cardNames.sort(key = lambda x: x.name)
 
 	

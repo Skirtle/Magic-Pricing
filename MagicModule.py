@@ -65,7 +65,14 @@ def getPrice(card):
 	if (price == None):
 		print(card)
 		print(response.json()["data"][0]["prices"])
-		exit("Recieved price is type None")
+		print("Recieved price is type None")
+		try:
+			price = prices["usd"]
+		except:
+			exit("Total price failure.")
+	if (price == None):
+		price = 0
+		print("Price set to 0")
 	return float(price)
 	
 def compareLists(list1, list2):

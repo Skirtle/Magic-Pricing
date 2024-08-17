@@ -3,3 +3,7 @@ __pycache__
 validations.txt
 DFC.txt
 typos.txt
+*.xlsx
+Run.ps1
+*.xlsx
+*.csv
