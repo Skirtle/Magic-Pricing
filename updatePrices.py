@@ -11,14 +11,11 @@ now = dt.datetime.now()
 timeWait = 0.1
 dir = getcwd() + "\\"
 encoding = "latin-1"
-sqlArg = "select * from Cards"
-earlyStop = None
-args = sys.argv
 
 # Arugment parsing
 parser = argparse.ArgumentParser(description="Create a spreadsheet of Magic: The Gathering card prices")
 parser.add_argument("-n", "--name", help="Name of Excel file", default="default", type=str)
-parser.add_argument("-s", "--stop", help="Stops after a certain count, default of 10", default=10, type=int)
+parser.add_argument("-s", "--stop", help="Stops after a certain count, default of None", default=None, type=int)
 parser.add_argument("-q", "--sql", help="Override default query search", default="select * from Cards")
 parser.add_argument("-c", "--close", help="Close terminal after fininshing", action="store_true", default=False)
 parser.add_argument("-p", "--print", help="Print cards as they are found", action="store_true")
@@ -26,48 +23,6 @@ parser.add_argument("-v", "--validate", help="Validate cards", action="store_tru
 parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
 parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
 args = parser.parse_args()
-
-"""if ("-name" in args or "-n" in args):
-	try: nameInd = args.index("-name")
-	except ValueError: nameInd = args.index("-n")
-
-	try: excelFilename = args[nameInd + 1]
-	except IndexError: exit("InputError: Missing name after " + args[nameInd])
-
-	if (".xlsx" not in excelFilename): excelFilename += ".xlsx"
-
-if ("-stop" in args or "-s" in args):
-	try: stopInd = args.index("-stop")
-	except ValueError: stopInd = args.index("-s")
-
-	try: earlyStop = int(args[stopInd + 1])
-	except IndexError: exit("InputError: Missing number after " + args[stopInd])
-	except ValueError: exit("NumberError: Input after " + args[stopInd] + " must be a number")
-
-if ("-sql" in args or "-q" in args):
-	try: sqlInd = args.index("-sql")
-	except ValueError: sqlInd = args.index("-q")
-
-	try: sqlArg = args[sqlInd + 1]
-	except IndexError: exit("InputError: Missing argument after " + args[sqlInd])
-
-if ("-close" in args or "-c" in args): autoClose = False
-else: autoClose = True
-
-if ("-print" in args or "-p" in args): printFlag = True
-else: printFlag = False
-
-if ("-validate" in args or "-v" in args): validation = True
-else: validation = False
-
-if ("-export" in args or "-e" in args or "-exportOnly" in args or "-eo" in args): 
-	args.export = True
-	if ("-exportOnly" in args or "-eo" in args): args.export_only = True
-	else: args.export_only = False
-else: 
-	args.export = False
-	if ("-exportOnly" in args or "-eo" in args): args.export_only = True
-	else: args.export_only = False"""
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
@@ -97,7 +52,7 @@ else: exportFile = None
 
 # Get all cards
 print("Accessing database for cards")
-cursor.execute(sqlArg) # SQL here
+cursor.execute(args.sql) # SQL here
 rows = cursor.fetchall()
 cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
 print("Cards collected. Setting up excel file for new entries")
@@ -206,4 +161,4 @@ cnxn.close()
 workbook.save(filename = excelFilename)
 if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
-if (args.close): input()
+if (not args.close): input()
