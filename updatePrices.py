@@ -55,6 +55,8 @@ print("Accessing database for cards")
 cursor.execute(args.sql) # SQL here
 rows = cursor.fetchall()
 cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
+cursor.close()
+cnxn.close()
 print("Cards collected. Setting up excel file for new entries")
 
 # Get new column for prices
@@ -156,8 +158,6 @@ if (not args.validate):
 	print("All cards added and updated, closing files")
 
 # Close everything
-cursor.close()
-cnxn.close()
 workbook.save(filename = excelFilename)
 if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
