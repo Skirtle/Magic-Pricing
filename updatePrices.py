@@ -18,12 +18,13 @@ args = sys.argv
 # Arugment parsing
 parser = argparse.ArgumentParser(description="Create a spreadsheet of Magic: The Gathering card prices")
 parser.add_argument("-n", "--name", help="Name of Excel file", default="default", type=str)
-parser.add_argument("-s", "--stop", help="Stop early", action="store_true")
+parser.add_argument("-s", "--stop", help="Stops after a certain count, default of 10", default=10, type=int)
 parser.add_argument("-q", "--sql", help="Override default query search", default="select * from Cards")
-parser.add_argument("-c", "--count", help="Close terminal after fininshing", action="store_true", default=False)
+parser.add_argument("-c", "--close", help="Close terminal after fininshing", action="store_true", default=False)
 parser.add_argument("-p", "--print", help="Print cards as they are found", action="store_true")
 parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
 parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
+parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
 args = parser.parse_args()
 
 """if ("-name" in args or "-n" in args):
@@ -61,12 +62,12 @@ else: validation = False
 
 if ("-export" in args or "-e" in args or "-exportOnly" in args or "-eo" in args): 
 	args.export = True
-	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
-	else: skipExcel = False
+	if ("-exportOnly" in args or "-eo" in args): args.export_only = True
+	else: args.export_only = False
 else: 
 	args.export = False
-	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
-	else: skipExcel = False"""
+	if ("-exportOnly" in args or "-eo" in args): args.export_only = True
+	else: args.export_only = False"""
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
@@ -124,19 +125,19 @@ rowNumber = 0
 addedCount = 0
 done = 0
 avgWaitTimes = [timeWait]
-if (not earlyStop): earlyStop = len(cards)
-print(f"Excel file set up. Retreiving prices from scryfall ({earlyStop} cards), column {column}")
+if (not args.stop): args.stop = len(cards)
+print(f"Excel file set up. Retreiving prices from scryfall ({args.stop} cards), column {column}")
 for card in cards:
-	if (skipExcel and not validation): break
+	if (args.export_only and not args.validate): break
 
-	if (done >= earlyStop): break
+	if (done >= args.stop): break
 	start = time.time()
 	# Percent done
-	perc = round((done / earlyStop) * 100, 2)
-	eta = np.average(avgWaitTimes) * (earlyStop - done)
+	perc = round((done / args.stop) * 100, 2)
+	eta = np.average(avgWaitTimes) * (args.stop - done)
 	eta, unit = mm.convTime(eta)
 	
-	if (not validation or skipExcel):
+	if (not args.validate or args.export_only):
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 		singlePrice = mm.getPrice(card)
@@ -153,7 +154,7 @@ for card in cards:
 				sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 				shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
 				line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
-				if (printFlag): print(line + " " * len(line), flush = True, end = "")
+				if (args.print): print(line + " " * len(line), flush = True, end = "")
 				else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 				found = True
 				break
@@ -169,17 +170,17 @@ for card in cards:
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
 			shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
 			line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
-			if (printFlag): print(line + " " * len(line), flush = True, end = "")
+			if (args.print): print(line + " " * len(line), flush = True, end = "")
 			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 			addedCount += 1
 	
-	elif (validation):
+	elif (args.validate):
 		same, trueName = mm.validate(card)
 		line = f"Record shows '{card}' but got {trueName}"
 		percStr = f"\t[{perc}%] "
 		
 		# Print short information
-		if (not printFlag): print("\r" + percStr, end = "", flush = True)
+		if (not args.print): print("\r" + percStr, end = "", flush = True)
 		# Print full information
 		else:
 			# Cards do not equal
@@ -195,7 +196,7 @@ for card in cards:
 	end = time.time()
 	avgWaitTimes.append(end - start)
 
-if (not validation):
+if (not args.validate):
 	print(f"Added {addedCount} new cards")
 	print("All cards added and updated, closing files")
 
@@ -203,6 +204,6 @@ if (not validation):
 cursor.close()
 cnxn.close()
 workbook.save(filename = excelFilename)
-if (validation): validationFile.close()
+if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
-if (autoClose): input()
+if (args.close): input()
