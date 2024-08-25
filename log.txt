@@ -1,2 +1,0 @@
-25/08/2024 16:18:16: INFO: Starting program
-25/08/2024 16:21:11: INFO: Finished

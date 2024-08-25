@@ -110,7 +110,7 @@ for card in cards:
 		try:
 			singlePrice = mm.getPrice(card)
 		except mm.InvalidCardException as ICE:
-			mm.log("WARNING: {ICE}", printMsg=True)
+			mm.log(f"WARNING: {ICE}", printMsg=True)
 			continue
 		except Exception as unknownError:
 			mm.log(f"ERROR: Unknown error on {card}\n\t{unknownError}", close=True, printMsg=True)
