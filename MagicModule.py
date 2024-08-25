@@ -26,9 +26,10 @@ def jprint(obj, ind = 2):
 class Card:
 	sort_index: int = field(init=False, repr=False)
 	name: str
-	cn: int
+	cn: str
 	set: str
 	foil: str = "No"
+	quantity: int = 1
 	fullinfo: dict = field(default_factory=dict)
 	
 	def __post_init__(self):
@@ -37,9 +38,12 @@ class Card:
 	def __str__(self):
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
-
 def getCardInfo(card):
-	return requests.get(f'https://api.scryfall.com/cards/search?q=cn:{card.cn}%20set:{card.set}%20game:paper')
+	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
+	if (req.json()["object"] == "error"):
+		req = requests.get(f"https://scryfall.com/search?q=cn%3D{card.cn}+set%3A{card.set}")
+	
+	return req
 
 def getPrice(card):
 	response = getCardInfo(card)
@@ -56,12 +60,19 @@ def getPrice(card):
 	except:
 		#print(card)
 		#print(response)
-		exit(f"Something went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
+		exit(f"\nSomething went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
 		
 	if (price == None):
 		print(card)
 		print(response.json()["data"][0]["prices"])
-		exit("Recieved price is type None")
+		print("Recieved price is type None")
+		try:
+			price = prices["usd"]
+		except:
+			exit("Total price failure.")
+	if (price == None):
+		price = 0
+		print("Price set to 0")
 	return float(price)
 	
 def compareLists(list1, list2):
@@ -90,12 +101,28 @@ def allTrue(l):
 			return False
 	return True
 
+def validate(card):
+	info = getCardInfo(card).json()
+	try:
+		actual = info["data"][0]["name"]
+	except KeyError:
+		print(f"KeyError: Something went from with {card}")
+		return False, "ERROR"
+	return actual == card.name, actual
+
+def _decompose(number):
+	# This function and numToCol() found on https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
+    number -= 1
+    if number < 26: yield number
+    else:
+        number, remainder = divmod(number, 26)
+        yield from _decompose(number)
+        yield remainder
+
+def numToCol(number):
+    return ''.join(chr(ord('A') + part) for part in _decompose(number))
 
 if (__name__ == "__main__"):
-	t1 = 5
-	t2 = 6.1
-	t3 = 5.12
-	print(convTime(t1)[0])
-	print(convTime(t2)[0])
-	print(convTime(t3)[0])
+	# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
+	print(getCardInfo(Card("Megantic Sliver", "185", "PM14", foil = True)))
 	

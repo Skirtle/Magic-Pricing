@@ -1,4 +1,4 @@
-import getCards as gc, numpy as np, matplotlib.pyplot as plt, random as rand, PySimpleGUI as sg
+import MagicModule as mm, numpy as np, matplotlib.pyplot as plt, PySimpleGUI as sg
 from openpyxl import Workbook, load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
@@ -9,8 +9,7 @@ workbook = None
 try:
 	workbook = load_workbook(filename = excelFilename)
 except:
-	workbook = Workbook()
-	workbook.save(filename = excelFilename)
+	exit(f"{excelFilename} not found")
 sheet = workbook.active
 
 def getPriceOfCard(card):
@@ -18,8 +17,8 @@ def getPriceOfCard(card):
 	row = 2
 	while (sheet[f"A{row}"].value != None):
 		excelCardInfo = [sheet[f"A{row}"].value, str(sheet[f"B{row}"].value), sheet[f"C{row}"].value, sheet[f"D{row}"].value]
-		compared = gc.getDifferences(excelCardInfo, [card.name, card.cn, card.foil, card.set])
-		if (gc.allTrue(compared)): break
+		compared = mm.getDifferences(excelCardInfo, [card.name, card.cn, card.foil, card.set])
+		if (mm.allTrue(compared)): break
 		row += 1
 	else:
 		print(card)
@@ -38,9 +37,7 @@ def getPriceOfCard(card):
 	prices = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1))) # Y
 	for index in range(0, len(dates)):
 		fixedColumn = chr(index + ord(startColumn))
-		excelDate = sheet[f"{fixedColumn}1"].value
-		fixedDate = np.datetime64(excelDate)
-		dates[index] = fixedDate
+		dates[index] = np.datetime64(sheet[f"{fixedColumn}1"].value)
 		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0
 		else: prices[index] = sheet[f"{fixedColumn}{row}"].value
 	
@@ -52,7 +49,7 @@ def getAllCards():
 	row = 2
 	while (sheet[f"A{row}"].value != None):
 		# Name, collector number, foiling type, set code
-		newCard = gc.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
+		newCard = mm.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
 		cards.append([newCard, getPriceOfCard(newCard)])
 		
 		row += 1
@@ -85,25 +82,16 @@ class Toolbar(NavigationToolbar2Tk):
 if __name__ == "__main__":
 	# Selected card
 	cards = getAllCards()
+	basics = ["Plains", "Island", "Swamp", "Mountain", "Forest"]
 	cardNames = [card[0] for card in cards]
 	cardNames.sort(key = lambda x: x.name)
 
 	
 	layout = [
 		[sg.Combo(cardNames, readonly=True, key = "_CARD_", enable_events=True), sg.B("Plot"), sg.B('Exit')],
-		# [sg.T('Controls:')],
 		[sg.Canvas(key='controls_cv')],
 		[sg.T('History:')],
-		[sg.Column(
-			layout=[
-				[sg.Canvas(key='fig_cv',
-						# it's important that you set this size
-						size=(400 * 2, 400)
-						)]
-			],
-			background_color='#DAE0E6',
-			pad=(0, 0)
-		)],
+		[sg.Column(layout=[[sg.Canvas(key='fig_cv', size=(400 * 2, 400))]], background_color='#DAE0E6', pad=(0, 0))],
 		[sg.B('Alive?')]
 
 	]
