@@ -38,6 +38,17 @@ class Card:
 	def __str__(self):
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
+class InvalidCardException(Exception):
+    def __init__(self, card):
+        self.card = card
+        super().__init__(f"Card {card} not found")
+        
+class InvalidQueryException(Exception):
+    def __init__(self, query):
+        self.query = query
+        super().__init__(f"Bad query {query:}")
+
+
 def getCardInfo(card):
 	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
 	if (req.json()["object"] == "error"):
@@ -49,7 +60,7 @@ def getPrice(card):
 	response = getCardInfo(card)
 	price = None
 	add = ""
-	if (card.foil == "Yes"):
+	if (card.foil == "Yes" or card.foil == "True"):
 		add = "_foil"
 	elif (card.foil == "Etched"):
 		add = "_etched"
@@ -60,7 +71,7 @@ def getPrice(card):
 	except:
 		#print(card)
 		#print(response)
-		exit(f"\nSomething went wrong with card {card.name} ({card.cn} {card.set}). Check the name or the set name")
+		raise InvalidCardException(card)
 		
 	if (price == None):
 		print(card)
@@ -124,5 +135,6 @@ def numToCol(number):
 
 if (__name__ == "__main__"):
 	# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
-	print(getCardInfo(Card("Megantic Sliver", "185", "PM14", foil = True)))
-	
+	c = Card("Revel in Riches", "1117", "XLN", foil = "Yes")
+	print(c)
+	print(getPrice(c))

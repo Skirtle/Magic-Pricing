@@ -22,15 +22,19 @@ parser.add_argument("-p", "--print", help="Print cards as they are found", actio
 parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
 parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
 parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
+parser.add_argument('-l', "--log", help="Log entry into log.txt", action="store_true")
 args = parser.parse_args()
 
 # Connection to database
-driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
-cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
-cursor = cnxn.cursor()
-cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
-cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
-cnxn.setencoding(encoding=encoding)
+try:
+	driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
+	cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
+	cursor = cnxn.cursor()
+	cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
+	cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
+	cnxn.setencoding(encoding=encoding)
+except:
+    exit("Error connecting to drivers and opening database")
 
 # Open excel workbook
 workbook = None
@@ -52,7 +56,11 @@ else: exportFile = None
 
 # Get all cards
 print("Accessing database for cards")
-cursor.execute(args.sql) # SQL here
+try:
+    cursor.execute(args.sql) # SQL here
+except Exception as e:
+    print("Bad query, defaulting to 'SLECT * FROM Cards'")
+    cursor.execute("SELECT * FROM Cards")
 rows = cursor.fetchall()
 cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
 cursor.close()
@@ -97,7 +105,15 @@ for card in cards:
 	if (not args.validate or args.export_only):
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-		singlePrice = mm.getPrice(card)
+		try:
+			singlePrice = mm.getPrice(card)
+		except mm.InvalidCardException as ICE:
+			print(ICE)
+			continue
+		except Exception as unknownError:
+			print(f"Unknown error on card {card}")
+			print(unknownError)
+			exit()
 		
 		# Search for an already existing cell with card name, collector number, foiling, and set
 		rowNumber = 1
