@@ -24,7 +24,7 @@ parser.add_argument("-e", "--export", help="Export into Excel file", action="sto
 parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
 args = parser.parse_args()
 
-mm.log("INFO: Starting program")
+mm.log(f"INFO: Starting program with arguments: {args}")
 
 # Connection to database
 try:
@@ -38,12 +38,13 @@ except:
 	mm.log("ERROR: Failure to connect to drivers and opening database", close=True)
 
 # Open excel workbook
+if (".xlsx" not in args.name):args.name=f"{args.name}.xlsx"
 workbook = None
-try: workbook = load_workbook(filename = excelFilename)
-except:
-	mm.log(f"WARNING: Failed to open workbook {excelFilename}")
+try: workbook = load_workbook(filename = args.name)
+except Exception as e:
+	mm.log(f"WARNING: Failed to open workbook {args.name}, creating it instead")
 	workbook = Workbook()
-	workbook.save(filename = excelFilename)
+	workbook.save(filename = args.name)
 sheet = workbook.active
 sheet["A1"] = "Card"
 sheet["B1"] = "CN"
@@ -174,7 +175,7 @@ if (not args.validate):
 	print("All cards added and updated, closing files")
 
 # Close everything
-workbook.save(filename = excelFilename)
+workbook.save(filename = args.name)
 if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
 if (not args.close): input()
