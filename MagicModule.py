@@ -1,6 +1,6 @@
-import json
-import requests
+import json, requests
 from dataclasses import dataclass, field
+from datetime import datetime
 
 def convTime(t):
 	if (t >= 3600):
@@ -47,7 +47,6 @@ class InvalidQueryException(Exception):
     def __init__(self, query):
         self.query = query
         super().__init__(f"Bad query {query:}")
-
 
 def getCardInfo(card):
 	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
@@ -132,6 +131,13 @@ def _decompose(number):
 
 def numToCol(number):
     return ''.join(chr(ord('A') + part) for part in _decompose(number))
+
+def log(msg, close=False, printMsg=False):
+    with open("log.txt", "a") as log:
+        now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        log.write(f"{now}: {msg}\n")
+    if (printMsg): print(msg)
+    if (close): exit(msg)
 
 if (__name__ == "__main__"):
 	# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper

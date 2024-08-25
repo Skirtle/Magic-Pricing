@@ -22,8 +22,9 @@ parser.add_argument("-p", "--print", help="Print cards as they are found", actio
 parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
 parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
 parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
-parser.add_argument('-l', "--log", help="Log entry into log.txt", action="store_true")
 args = parser.parse_args()
+
+mm.log("INFO: Starting program")
 
 # Connection to database
 try:
@@ -34,12 +35,13 @@ try:
 	cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
 	cnxn.setencoding(encoding=encoding)
 except:
-    exit("Error connecting to drivers and opening database")
+	mm.log("ERROR: Failure to connect to drivers and opening database", close=True)
 
 # Open excel workbook
 workbook = None
 try: workbook = load_workbook(filename = excelFilename)
 except:
+	mm.log(f"WARNING: Failed to open workbook {excelFilename}")
 	workbook = Workbook()
 	workbook.save(filename = excelFilename)
 sheet = workbook.active
@@ -57,10 +59,10 @@ else: exportFile = None
 # Get all cards
 print("Accessing database for cards")
 try:
-    cursor.execute(args.sql) # SQL here
+	cursor.execute(args.sql) # SQL here
 except Exception as e:
-    print("Bad query, defaulting to 'SLECT * FROM Cards'")
-    cursor.execute("SELECT * FROM Cards")
+	mm.log("WARNING: Bad query, defaulting to 'SLECT * FROM Cards'", printMsg=True)
+	cursor.execute("SELECT * FROM Cards")
 rows = cursor.fetchall()
 cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
 cursor.close()
@@ -108,12 +110,10 @@ for card in cards:
 		try:
 			singlePrice = mm.getPrice(card)
 		except mm.InvalidCardException as ICE:
-			print(ICE)
+			mm.log("WARNING: {ICE}", printMsg=True)
 			continue
 		except Exception as unknownError:
-			print(f"Unknown error on card {card}")
-			print(unknownError)
-			exit()
+			mm.log(f"ERROR: Unknown error on {card}\n\t{unknownError}", close=True, printMsg=True)
 		
 		# Search for an already existing cell with card name, collector number, foiling, and set
 		rowNumber = 1
@@ -178,3 +178,4 @@ workbook.save(filename = excelFilename)
 if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
 if (not args.close): input()
+mm.log("INFO: Finished")
