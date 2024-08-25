@@ -1,4 +1,4 @@
-import time, pyodbc, sys
+import time, pyodbc, sys, argparse
 import MagicModule as mm, numpy as np, datetime as dt
 from openpyxl import Workbook, load_workbook
 from os import getcwd
@@ -14,7 +14,19 @@ encoding = "latin-1"
 sqlArg = "select * from Cards"
 earlyStop = None
 args = sys.argv
-if ("-name" in args or "-n" in args):
+
+# Arugment parsing
+parser = argparse.ArgumentParser(description="Create a spreadsheet of Magic: The Gathering card prices")
+parser.add_argument("-n", "--name", help="Name of Excel file", default="default", type=str)
+parser.add_argument("-s", "--stop", help="Stop early", action="store_true")
+parser.add_argument("-q", "--sql", help="Override default query search", default="select * from Cards")
+parser.add_argument("-c", "--count", help="Close terminal after fininshing", action="store_true", default=False)
+parser.add_argument("-p", "--print", help="Print cards as they are found", action="store_true")
+parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
+parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
+args = parser.parse_args()
+
+"""if ("-name" in args or "-n" in args):
 	try: nameInd = args.index("-name")
 	except ValueError: nameInd = args.index("-n")
 
@@ -48,13 +60,13 @@ if ("-validate" in args or "-v" in args): validation = True
 else: validation = False
 
 if ("-export" in args or "-e" in args or "-exportOnly" in args or "-eo" in args): 
-	exportFlag = True
+	args.export = True
 	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
 	else: skipExcel = False
 else: 
-	exportFlag = False
+	args.export = False
 	if ("-exportOnly" in args or "-eo" in args): skipExcel = True
-	else: skipExcel = False
+	else: skipExcel = False"""
 
 # Connection to database
 driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
@@ -77,9 +89,9 @@ sheet["C1"] = "Foiling"
 sheet["D1"] = "Set"
 
 # Open text files
-if (validation): validationFile = open(validationFilename, "w")
+if (args.validate): validationFile = open(validationFilename, "w")
 else: validationFile = None
-if (exportFlag): exportFile = open("export.csv", "w")
+if (args.export): exportFile = open("export.csv", "w")
 else: exportFile = None
 
 # Get all cards
@@ -97,7 +109,7 @@ sheet[f"{column}1"] = dt.datetime(now.year, now.month, now.day)
 sheet[f"{column}1"].number_format = "mm/dd/yyyy;@"
 
 # Export to csv
-if (exportFlag):
+if (args.export):
 	print("Exporting to export.csv")
 	for card in cards:
 		if (card.foil == "No"): foiling = "normal"
