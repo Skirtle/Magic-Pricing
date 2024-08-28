@@ -134,7 +134,7 @@ def numToCol(number):
 
 def log(msg, close=False, printMsg=False):
     with open("log.txt", "a") as log:
-        now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        now = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         log.write(f"{now}: {msg}\n")
     if (printMsg): print(msg)
     if (close): exit(msg)

@@ -5,7 +5,6 @@ from os import getcwd
 
 # Default variables
 accessFilename = "Magic.accdb"
-excelFilename = "MagicPrices.xlsx"
 validationFilename = "validations.txt"
 now = dt.datetime.now()
 timeWait = 0.1
@@ -14,14 +13,15 @@ encoding = "latin-1"
 
 # Arugment parsing
 parser = argparse.ArgumentParser(description="Create a spreadsheet of Magic: The Gathering card prices")
-parser.add_argument("-n", "--name", help="Name of Excel file", default="default", type=str)
+parser.add_argument("-n", "--name", help="Name of Excel file", default="MagicPrices", type=str)
 parser.add_argument("-s", "--stop", help="Stops after a certain count, default of None", default=None, type=int)
 parser.add_argument("-q", "--sql", help="Override default query search", default="select * from Cards")
 parser.add_argument("-c", "--close", help="Close terminal after fininshing", action="store_true", default=False)
 parser.add_argument("-p", "--print", help="Print cards as they are found", action="store_true")
 parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
-parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
-parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
+parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true") # double check this even works
+parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true") # same with this
+parser.add_argument("--comment", help="Add a comment in the logs", default=None)
 args = parser.parse_args()
 
 mm.log(f"INFO: Starting program with arguments: {args}")
