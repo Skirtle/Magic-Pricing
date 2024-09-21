@@ -139,8 +139,29 @@ def log(msg, close=False, printMsg=False):
     if (printMsg): print(msg)
     if (close): exit(msg)
 
+def excelColToNum(column: str):
+	num = 0
+	mult = len(column) - 1
+	for char in column:
+		base = ord(char) - 64
+		num += base * int(pow(26, mult))
+		mult -= 1
+	return num
+
+def excelNumToCol(num: int):
+    res = ""
+    while (num > 0):
+        num -= 1
+        res = chr((num % 26) + 65) + res
+        num = num//26
+    return res
+
 if (__name__ == "__main__"):
-	# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
-	c = Card("Revel in Riches", "1117", "XLN", foil = "Yes")
-	print(c)
-	print(getPrice(c))
+	print(excelNumToCol(excelColToNum("A")))
+	print(excelNumToCol(excelColToNum("ABC")))
+
+	"""# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
+	c = Card("Revel in Riches", "117", "XLN", foil = "Yes")
+	response = getCardInfo(c)
+	prices = response.json()["data"][0]["image_uris"]["normal"]
+	jprint(prices)"""

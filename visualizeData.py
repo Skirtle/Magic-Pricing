@@ -27,16 +27,16 @@ def getPriceOfCard(card):
 		
 	# Find date columns
 	startColumn = 'E'
-	colAsNum = ord(startColumn)
-	while (sheet[f"{chr(colAsNum)}1"].value != None):
+	colAsNum = mm.excelColToNum(startColumn)
+	while (sheet[f"{mm.excelNumToCol(colAsNum)}1"].value != None):
 		colAsNum += 1
-	endColumn = chr(colAsNum - 1)
+	endColumn = mm.excelNumToCol(colAsNum - 1)
 
 	# Get prices
-	dates = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1)), dtype = "datetime64[s]") # X
-	prices = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1))) # Y
+	dates = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1)), dtype = "datetime64[s]") # X
+	prices = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1))) # Y
 	for index in range(0, len(dates)):
-		fixedColumn = chr(index + ord(startColumn))
+		fixedColumn = mm.excelNumToCol(index + mm.excelColToNum(startColumn))
 		dates[index] = np.datetime64(sheet[f"{fixedColumn}1"].value)
 		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0
 		else: prices[index] = sheet[f"{fixedColumn}{row}"].value
