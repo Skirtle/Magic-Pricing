@@ -5,7 +5,6 @@ from os import getcwd
 
 # Default variables
 accessFilename = "Magic.accdb"
-excelFilename = "MagicPrices.xlsx"
 validationFilename = "validations.txt"
 now = dt.datetime.now()
 timeWait = 0.1
@@ -14,30 +13,38 @@ encoding = "latin-1"
 
 # Arugment parsing
 parser = argparse.ArgumentParser(description="Create a spreadsheet of Magic: The Gathering card prices")
-parser.add_argument("-n", "--name", help="Name of Excel file", default="default", type=str)
+parser.add_argument("-n", "--name", help="Name of Excel file", default="MagicPrices", type=str)
 parser.add_argument("-s", "--stop", help="Stops after a certain count, default of None", default=None, type=int)
 parser.add_argument("-q", "--sql", help="Override default query search", default="select * from Cards")
 parser.add_argument("-c", "--close", help="Close terminal after fininshing", action="store_true", default=False)
 parser.add_argument("-p", "--print", help="Print cards as they are found", action="store_true")
 parser.add_argument("-v", "--validate", help="Validate cards", action="store_true")
-parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true")
-parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true")
+parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true") # double check this even works
+parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true") # same with this
+parser.add_argument("--comment", help="Add a comment in the logs", default=None)
 args = parser.parse_args()
 
+mm.log(f"INFO: Starting program with arguments: {args}")
+
 # Connection to database
-driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
-cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
-cursor = cnxn.cursor()
-cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
-cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
-cnxn.setencoding(encoding=encoding)
+try:
+	driverStr = r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='
+	cnxn = pyodbc.connect(driverStr + dir + accessFilename + ";")
+	cursor = cnxn.cursor()
+	cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
+	cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
+	cnxn.setencoding(encoding=encoding)
+except:
+	mm.log("ERROR: Failure to connect to drivers and opening database", close=True)
 
 # Open excel workbook
+if (".xlsx" not in args.name):args.name=f"{args.name}.xlsx"
 workbook = None
-try: workbook = load_workbook(filename = excelFilename)
-except:
+try: workbook = load_workbook(filename = args.name)
+except Exception as e:
+	mm.log(f"WARNING: Failed to open workbook {args.name}, creating it instead")
 	workbook = Workbook()
-	workbook.save(filename = excelFilename)
+	workbook.save(filename = args.name)
 sheet = workbook.active
 sheet["A1"] = "Card"
 sheet["B1"] = "CN"
@@ -52,7 +59,11 @@ else: exportFile = None
 
 # Get all cards
 print("Accessing database for cards")
-cursor.execute(args.sql) # SQL here
+try:
+	cursor.execute(args.sql) # SQL here
+except Exception as e:
+	mm.log("WARNING: Bad query, defaulting to 'SLECT * FROM Cards'", printMsg=True)
+	cursor.execute("SELECT * FROM Cards")
 rows = cursor.fetchall()
 cards = [mm.Card(c[0], c[1], c[2], c[3], quantity=c[4]) for c in rows]
 cursor.close()
@@ -97,7 +108,13 @@ for card in cards:
 	if (not args.validate or args.export_only):
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
-		singlePrice = mm.getPrice(card)
+		try:
+			singlePrice = mm.getPrice(card)
+		except mm.InvalidCardException as ICE:
+			mm.log(f"WARNING: {ICE}", printMsg=True)
+			continue
+		except Exception as unknownError:
+			mm.log(f"ERROR: Unknown error on {card}\n\t{unknownError}", close=True, printMsg=True)
 		
 		# Search for an already existing cell with card name, collector number, foiling, and set
 		rowNumber = 1
@@ -158,7 +175,8 @@ if (not args.validate):
 	print("All cards added and updated, closing files")
 
 # Close everything
-workbook.save(filename = excelFilename)
+workbook.save(filename = args.name)
 if (args.validate): validationFile.close()
 print("All files closed and saved. You may exit this program and access the files now")
 if (not args.close): input()
+mm.log("INFO: Finished")

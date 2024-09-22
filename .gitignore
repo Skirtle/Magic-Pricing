@@ -8,3 +8,5 @@ Run.ps1
 *.xlsx
 *.csv
 updatePrices_old.py
+log.txt
+Old_Magic.accdb

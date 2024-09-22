@@ -27,16 +27,16 @@ def getPriceOfCard(card):
 		
 	# Find date columns
 	startColumn = 'E'
-	colAsNum = ord(startColumn)
-	while (sheet[f"{chr(colAsNum)}1"].value != None):
+	colAsNum = mm.excelColToNum(startColumn)
+	while (sheet[f"{mm.excelNumToCol(colAsNum)}1"].value != None):
 		colAsNum += 1
-	endColumn = chr(colAsNum - 1)
+	endColumn = mm.excelNumToCol(colAsNum - 1)
 
 	# Get prices
-	dates = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1)), dtype = "datetime64[s]") # X
-	prices = np.zeros(len(range(ord(startColumn), ord(endColumn) + 1))) # Y
+	dates = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1)), dtype = "datetime64[s]") # X
+	prices = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1))) # Y
 	for index in range(0, len(dates)):
-		fixedColumn = chr(index + ord(startColumn))
+		fixedColumn = mm.excelNumToCol(index + mm.excelColToNum(startColumn))
 		dates[index] = np.datetime64(sheet[f"{fixedColumn}1"].value)
 		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0
 		else: prices[index] = sheet[f"{fixedColumn}{row}"].value
@@ -103,9 +103,11 @@ if __name__ == "__main__":
 		# An exit
 		if event in (sg.WIN_CLOSED, 'Exit'):
 			break
+
 		# Event for selecting a card via dropdown menu
 		elif event == "_CARD_":
 			selectedCard = values["_CARD_"]
+   
 		# Event for Plot button
 		elif event == 'Plot':
 			# Create chart and fix size
@@ -122,6 +124,24 @@ if __name__ == "__main__":
 			ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
 			ax.yaxis.set_major_formatter('${x:1.2f}')
 			fig.autofmt_xdate()
+   
+			# Get min and max values and annotate (https://stackoverflow.com/questions/43374920/how-to-automatically-annotate-maximum-value-in-pyplot)
+			dateMin = dates[np.argmin(prices)]
+			priceMin = prices.min()
+   
+			dateMax = dates[np.argmax(prices)]
+			priceMax = prices.max()
+
+			print(dateMin, priceMin, dateMax, priceMax)
+			
+			bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+			arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=90")
+			kw = dict(xycoords='data',
+              arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
+			ax.annotate(f"${priceMin}", xy=(dateMin, priceMin), xytext=(0, -30), textcoords="offset points", **kw)
+			ax.annotate(f"${priceMax}", xy=(dateMax, priceMax), xytext=(0, -30), textcoords="offset points", **kw)
+
+			
 			
 			# Show data
 			draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
