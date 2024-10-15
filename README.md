@@ -1,9 +1,7 @@
-# Magic-Pricing
-Record of my collection of cards (ever updating, never settled)
-
 # How to use
+
 ## 0. Pre-requirements
-* Python installed
+* Python installed (I'm using 3.12.1)
 * Have an Access database with the following columns:
   * Name as Short Text
   * CollectorNumber as Short Text
@@ -13,7 +11,7 @@ Record of my collection of cards (ever updating, never settled)
   * Date as Date/Time
 
 ## 1. Run "python .\updatePrices.py" with any arguments requested
-* Some arguments include:
+* Some helpful arguments include:
   * -h, --help: Get help message
   * -n, --name: Output Excel file's name
   * -q, --sql: SQL query when accessing the Access database
@@ -28,3 +26,11 @@ Record of my collection of cards (ever updating, never settled)
 * Two ways to check the data
   * Run "python .\visualizeData.py"
   * Open the created Excel file (default is MagicPrices.xlsx)
+
+
+# Updates and bugs
+I update a [Trello Board](https://trello.com/b/tSz5I1D7/mtg) with known bugs and planned features, plus the current progress of those features.
+
+# Contact
+* Discord: .skirtle
+* Email: daltonkajander@yahoo.com
