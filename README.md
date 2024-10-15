@@ -2,15 +2,15 @@
 Record of my collection of cards (ever updating, never settled)
 
 # How to use
-0. Have an Access database with the following columns:
-* Name as Short Text
-* CollectorNumber as Short Text
-* Set as Short Text
-* Foil as Short Text
-* Amount as Number
-* Date as Date/Time
+## 0. Have an Access database with the following columns:
+  * Name as Short Text
+  * CollectorNumber as Short Text
+  * Set as Short Text
+  * Foil as Short Text
+  * Amount as Number
+  * Date as Date/Time
 
-1. Run "python .\updatePrices.py" with any arguments requested
+## 1. Run "python .\updatePrices.py" with any arguments requested
 * Some arguments include:
   * -h, --help: Get help message
   * -n, --name: Output Excel file's name
@@ -22,7 +22,7 @@ Record of my collection of cards (ever updating, never settled)
   * -E, --export_only: Only export into Excel file (May not work right now)
   * --comment: Adds a comment to the log file when ran
 
-2. View data
+## 2. View data
 * Two ways to check the data
   * Run "python .\visualizeData.py"
   * Open the created Excel file (default is MagicPrices.xlsx)
