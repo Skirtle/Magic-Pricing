@@ -79,10 +79,11 @@ class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
         super(Toolbar, self).__init__(*args, **kwargs)
 
+
+
 if __name__ == "__main__":
 	# Selected card
 	cards = getAllCards()
-	basics = ["Plains", "Island", "Swamp", "Mountain", "Forest"]
 	cardNames = [card[0] for card in cards]
 	cardNames.sort(key = lambda x: x.name)
 
