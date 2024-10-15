@@ -2,28 +2,24 @@ import MagicModule as mm, numpy as np, matplotlib.pyplot as plt, PySimpleGUI as 
 from openpyxl import Workbook, load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-
-# Open excel workbook
-excelFilename = "MagicPrices.xlsx"
-workbook = None
-try:
-	workbook = load_workbook(filename = excelFilename)
-except:
-	exit(f"{excelFilename} not found")
-sheet = workbook.active
-
 def getPriceOfCard(card):
-	# Find card in sheet
+    #Goes through the input Excel workbook and finds the card and its prices
+    
+    # Find card in sheet
 	row = 2
 	while (sheet[f"A{row}"].value != None):
-		excelCardInfo = [sheet[f"A{row}"].value, str(sheet[f"B{row}"].value), sheet[f"C{row}"].value, sheet[f"D{row}"].value]
+		card_name = sheet[f"A{row}"].value
+		card_number = str(sheet[f"B{row}"].value)
+		card_foiling = sheet[f"C{row}"].value
+		card_set = sheet[f"D{row}"].value
+	
+		excelCardInfo = [card_name, card_number, card_foiling, card_set]
 		compared = mm.getDifferences(excelCardInfo, [card.name, card.cn, card.foil, card.set])
 		if (mm.allTrue(compared)): break
 		row += 1
 	else:
 		print(card)
 		return None
-		
 		
 	# Find date columns
 	startColumn = 'E'
@@ -33,34 +29,41 @@ def getPriceOfCard(card):
 	endColumn = mm.excelNumToCol(colAsNum - 1)
 
 	# Get prices
-	dates = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1)), dtype = "datetime64[s]") # X
-	prices = np.zeros(len(range(mm.excelColToNum(startColumn), mm.excelColToNum(endColumn) + 1))) # Y
-	for index in range(0, len(dates)):
+	start_index = mm.excelColToNum(startColumn)
+	end_index = mm.excelColToNum(endColumn) + 1
+	data_len = end_index - start_index
+	dates = np.zeros(data_len, dtype = "datetime64[s]") # X data
+	prices = np.zeros(data_len) # Y data
+	
+	for index in range(len(dates)):
 		fixedColumn = mm.excelNumToCol(index + mm.excelColToNum(startColumn))
 		dates[index] = np.datetime64(sheet[f"{fixedColumn}1"].value)
-		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0
-		else: prices[index] = sheet[f"{fixedColumn}{row}"].value
+		if (sheet[f"{fixedColumn}{row}"].value == "-"): prices[index] = 0 # Price cannot be found for this date, possible if card was added at a later time
+		else: prices[index] = sheet[f"{fixedColumn}{row}"].value # Otherwise, get the price
 	
 	return (dates, prices)
 
 def getAllCards():
 	# List with all cards and price histories for those cards
-	cards =[]
+	cards = []
 	row = 2
 	while (sheet[f"A{row}"].value != None):
 		# Name, collector number, foiling type, set code
-		newCard = mm.Card(sheet[f"A{row}"].value, sheet[f"B{row}"].value, sheet[f"D{row}"].value, sheet[f"C{row}"].value)
+		card_name = sheet[f"A{row}"].value
+		card_number = sheet[f"B{row}"].value
+		card_foil = sheet[f"D{row}"].value
+		card_set = sheet[f"C{row}"].value
+		newCard = mm.Card(card_name, card_number, card_foil, card_set)
 		cards.append([newCard, getPriceOfCard(newCard)])
-		
 		row += 1
 	
 	return cards
 
-def returnData(item, list):
+def returnCardData(item, list):
     for index,value in enumerate(list):
         if (item == list[index][0]):
             return list[index][1][0], list[index][1][1]
-    return None, None
+    return np.array([]), np.array([])
 
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     if canvas.children:
@@ -80,19 +83,29 @@ class Toolbar(NavigationToolbar2Tk):
         super(Toolbar, self).__init__(*args, **kwargs)
 
 if __name__ == "__main__":
-	# Selected card
+	# Open excel workbook
+	excelFilename = input("Enter Excel filename, or press enter for default: ")
+	if (excelFilename == ""):
+		excelFilename = "MagicPrices.xlsx"
+	elif (".xlsx" not in excelFilename):
+		excelFilename = excelFilename + ".xlsx"
+	
+	try:
+		workbook = load_workbook(filename = excelFilename)
+	except:
+		exit(f"{excelFilename} not found")
+	sheet = workbook.active
+ 
+ 	# Selected card
 	cards = getAllCards()
-	basics = ["Plains", "Island", "Swamp", "Mountain", "Forest"]
 	cardNames = [card[0] for card in cards]
-	cardNames.sort(key = lambda x: x.name)
-
+	cardNames.sort(key = lambda x: x.name) # Default is sort by name. Will add ability to sort by other metrics (cn, set, latest price, foiling)
 	
 	layout = [
 		[sg.Combo(cardNames, readonly=True, key = "_CARD_", enable_events=True), sg.B("Plot"), sg.B('Exit')],
 		[sg.Canvas(key='controls_cv')],
 		[sg.T('History:')],
-		[sg.Column(layout=[[sg.Canvas(key='fig_cv', size=(400 * 2, 400))]], background_color='#DAE0E6', pad=(0, 0))],
-		[sg.B('Alive?')]
+		[sg.Column(layout=[[sg.Canvas(key='fig_cv', size=(400 * 2, 400))]], background_color='#DAE0E6', pad=(0, 0))]
 
 	]
 	window = sg.Window('Card Price History Viewer', layout)
@@ -116,7 +129,9 @@ if __name__ == "__main__":
 			fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 			
 			# Plot data and fix labels
-			dates, prices = returnData(selectedCard, cards)
+			dates, prices = returnCardData(selectedCard, cards)
+			if (dates.size != prices.size or dates.size == 0 or prices.size == 0):
+				exit(f"Error with date/price, {dates=}, {prices=}, exitting.")
 			ax.plot(dates, prices, **{'color': 'green', 'marker': 'o'})
 			plt.xlabel("Date")
 			plt.ylabel("Price")
@@ -131,18 +146,13 @@ if __name__ == "__main__":
    
 			dateMax = dates[np.argmax(prices)]
 			priceMax = prices.max()
-
-			print(dateMin, priceMin, dateMax, priceMax)
 			
 			bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
 			arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=90")
-			kw = dict(xycoords='data',
-              arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
+			kw = dict(xycoords='data', arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
 			ax.annotate(f"${priceMin}", xy=(dateMin, priceMin), xytext=(0, -30), textcoords="offset points", **kw)
 			ax.annotate(f"${priceMax}", xy=(dateMax, priceMax), xytext=(0, -30), textcoords="offset points", **kw)
 
-			
-			
 			# Show data
 			draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
