@@ -2,17 +2,27 @@
 Record of my collection of cards (ever updating, never settled)
 
 # How to use
-* Have Python 3 installed (and some modules I will put here later)
-* Have an Access database named Magic.accdb (included)
-1. Input all cards and relevant information into Magic.accdb
-2. Run updatePrices.py
-	This will create/update MagicPrices.xlsx
-3. (Optional) run visualizeData.py to see price histories of selected cards without the need of an Excel graph
-* It should be noted that Scryfall updates their prices once every 24 hours and asks that all requests to the API be, on average, between 50 and 100 ms between one another
-* More information can be found at https://scryfall.com/docs/api
+0. Have an Access database with the following columns:
+* Name as Short Text
+* CollectorNumber as Short Text
+* Set as Short Text
+* Foil as Short Text
+* Amount as Number
+* Date as Date/Time
 
+1. Run "python .\updatePrices.py" with any arguments requested
+* Some arguments include:
+  * -h, --help: Get help message
+  * -n, --name: Output Excel file's name
+  * -q, --sql: SQL query when accessing the Access database
+  * -c, --close: Closes the terminal when done
+  * -p, --print: Print progress of cards as prices are found
+  * -v, --validate: Validates that all cards in the database can be found correctly
+  * -e, --export: Exports into an Excel file (May not work right now)
+  * -E, --export_only: Only export into Excel file (May not work right now)
+  * --comment: Adds a comment to the log file when ran
 
-# Update 1.1
-* Added a visualizer for price history (integrated in the UI)
-* Dynamic cnxn rather than hardcoded
-* Created a UI to select from all cards from the excel sheet
+2. View data
+* Two ways to check the data
+  * Run "python .\visualizeData.py"
+  * Open the created Excel file (default is MagicPrices.xlsx)
