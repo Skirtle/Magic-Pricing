@@ -2,7 +2,9 @@
 Record of my collection of cards (ever updating, never settled)
 
 # How to use
-## 0. Have an Access database with the following columns:
+## 0. Pre-requirements
+* Python installed
+* Have an Access database with the following columns:
   * Name as Short Text
   * CollectorNumber as Short Text
   * Set as Short Text
