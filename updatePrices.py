@@ -22,6 +22,8 @@ parser.add_argument("-v", "--validate", help="Validate cards", action="store_tru
 parser.add_argument("-e", "--export", help="Export into Excel file", action="store_true") # double check this even works
 parser.add_argument('-E', "--export_only", help="Only export into Excel file", action="store_true") # same with this
 parser.add_argument("--comment", help="Add a comment in the logs", default=None)
+parser.add_argument("--no_cache", help="Do not cache prices", action="store_true")
+parser.add_argument("--use_cache", help="Use cached prices", action="store_true")
 args = parser.parse_args()
 
 mm.log(f"INFO: Starting program with arguments: {args}")
@@ -93,11 +95,13 @@ rowNumber = 0
 addedCount = 0
 done = 0
 avgWaitTimes = [timeWait]
+
 if (not args.stop): args.stop = len(cards)
 print(f"Excel file set up. Retreiving prices from scryfall ({args.stop} cards), column {column}")
 for card in cards:
 	if (args.export_only and not args.validate): break
 
+	# Time watching and early stopping
 	if (done >= args.stop): break
 	start = time.time()
 	# Percent done
@@ -109,6 +113,7 @@ for card in cards:
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 		try:
+			if (args.use_cache): print("Using cache")
 			singlePrice = mm.getPrice(card)
 		except mm.InvalidCardException as ICE:
 			mm.log(f"WARNING: {ICE}", printMsg=True)

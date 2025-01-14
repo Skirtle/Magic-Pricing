@@ -21,6 +21,7 @@
   * -e, --export: Exports into an Excel file (May not work right now)
   * -E, --export_only: Only export into Excel file (May not work right now)
   * --comment: Adds a comment to the log file when ran
+  * --no_cache: Do not cache prices
 
 ## 2. View data
 * Two ways to check the data

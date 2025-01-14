@@ -1,6 +1,7 @@
-import json, requests
+import json, requests, csv
 from dataclasses import dataclass, field
 from datetime import datetime
+from io import StringIO
 
 def convTime(t):
 	if (t >= 3600):
@@ -156,12 +157,26 @@ def excelNumToCol(num: int):
         num = num//26
     return res
 
-if (__name__ == "__main__"):
-	print(excelNumToCol(excelColToNum("A")))
-	print(excelNumToCol(excelColToNum("ABC")))
+def checkCache():
+    with open("price.cache", "r") as file:
+        date = file.readline().strip()
+        current_date = datetime.now()
+        current_date = current_date.strftime('%m/%d/%Y')
+        if (date != current_date):  return False
+        
+        cards = []
+        while True:
+            card = file.readline()
+            if not card:
+                break
+            card_reader = csv.reader(StringIO(card.strip()))
+            card = [item.strip() for row in card_reader for item in row]
+            cards.append(card)
+        return cards
 
-	"""# https://api.scryfall.com/cards/search?q=cn:\"185\"%20set:pm14%20game:paper
-	c = Card("Revel in Riches", "117", "XLN", foil = "Yes")
-	response = getCardInfo(c)
-	prices = response.json()["data"][0]["image_uris"]["normal"]
-	jprint(prices)"""
+def addToCache(card: Card, price: float):
+    with open("price.cache", "a") as file:
+        file.write(f"\"{card.name}\", {card.cn}, {card.foil}, {card.set}, {price}")
+
+if (__name__ == "__main__"):
+    print(checkCache())
