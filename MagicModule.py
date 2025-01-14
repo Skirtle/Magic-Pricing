@@ -2,6 +2,10 @@ import json, requests, csv
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
+from hashlib import sha256
+from time import sleep
+
+_cache = None
 
 def convTime(t):
 	if (t >= 3600):
@@ -40,24 +44,16 @@ class Card:
 		return f'{self.name} ({self.cn}, {self.set}) {"[F]" if self.foil == "Yes" else ("[FE]" if self.foil == "Etched" else "")}'
 
 class InvalidCardException(Exception):
-    def __init__(self, card):
-        self.card = card
-        super().__init__(f"Card {card} not found")
-        
+	def __init__(self, card):
+		self.card = card
+		super().__init__(f"Card {card} not found")
+		
 class InvalidQueryException(Exception):
-    def __init__(self, query):
-        self.query = query
-        super().__init__(f"Bad query {query:}")
+	def __init__(self, query):
+		self.query = query
+		super().__init__(f"Bad query {query:}")
 
-def getCardInfo(card):
-	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
-	if (req.json()["object"] == "error"):
-		req = requests.get(f"https://scryfall.com/search?q=cn%3D{card.cn}+set%3A{card.set}")
-	
-	return req
-
-def getPrice(card):
-	response = getCardInfo(card)
+def get_price_from_json(card, response):
 	price = None
 	add = ""
 	if (card.foil == "Yes" or card.foil == "True"):
@@ -69,8 +65,6 @@ def getPrice(card):
 		prices = response.json()["data"][0]["prices"]
 		price = prices["usd" + add]
 	except:
-		#print(card)
-		#print(response)
 		raise InvalidCardException(card)
 		
 	if (price == None):
@@ -84,6 +78,44 @@ def getPrice(card):
 	if (price == None):
 		price = 0
 		print("Price set to 0")
+
+	return price
+
+def call_api(card):
+	req = requests.get(f'https://api.scryfall.com/cards/search?q=cn:\"{card.cn}\"%20set:{card.set}%20game:paper')
+	if (req.json()["object"] == "error"):
+		req = requests.get(f"https://scryfall.com/search?q=cn%3D{card.cn}+set%3A{card.set}")
+	sleep(0.1)
+	return req
+
+def getCardInfo(card, use_cache = False):
+	global _cache
+	failed = False
+	
+ 
+	# Try to read from cache
+	if (use_cache):
+		card_hash = generate_card_hash(card)
+		value = next((row for row in _cache if row[0] == card_hash), None)
+  
+		try:
+			price = value[1]
+			return price
+		except:
+			failed = True
+	
+	if (failed): price = get_price_from_json(card, call_api(card))
+	
+	# Add to cache
+	if (failed and use_cache): addToCache(card, price)
+	return price
+
+def getPrice(card, use_cache = False):
+	global _cache
+	if (_cache == None and use_cache): 
+		_cache = load_cache()
+  
+	price = getCardInfo(card, use_cache)
 	return float(price)
 	
 def compareLists(list1, list2):
@@ -123,22 +155,22 @@ def validate(card):
 
 def _decompose(number):
 	# This function and numToCol() found on https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
-    number -= 1
-    if number < 26: yield number
-    else:
-        number, remainder = divmod(number, 26)
-        yield from _decompose(number)
-        yield remainder
+	number -= 1
+	if number < 26: yield number
+	else:
+		number, remainder = divmod(number, 26)
+		yield from _decompose(number)
+		yield remainder
 
 def numToCol(number):
-    return ''.join(chr(ord('A') + part) for part in _decompose(number))
+	return ''.join(chr(ord('A') + part) for part in _decompose(number))
 
 def log(msg, close=False, printMsg=False):
-    with open("log.txt", "a") as log:
-        now = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-        log.write(f"{now}: {msg}\n")
-    if (printMsg): print(msg)
-    if (close): exit(msg)
+	with open("log.txt", "a") as log:
+		now = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+		log.write(f"{now}: {msg}\n")
+	if (printMsg): print(msg)
+	if (close): exit(msg)
 
 def excelColToNum(column: str):
 	num = 0
@@ -150,33 +182,45 @@ def excelColToNum(column: str):
 	return num
 
 def excelNumToCol(num: int):
-    res = ""
-    while (num > 0):
-        num -= 1
-        res = chr((num % 26) + 65) + res
-        num = num//26
-    return res
+	res = ""
+	while (num > 0):
+		num -= 1
+		res = chr((num % 26) + 65) + res
+		num = num//26
+	return res
 
-def checkCache():
-    with open("price.cache", "r") as file:
-        date = file.readline().strip()
-        current_date = datetime.now()
-        current_date = current_date.strftime('%m/%d/%Y')
-        if (date != current_date):  return False
-        
-        cards = []
-        while True:
-            card = file.readline()
-            if not card:
-                break
-            card_reader = csv.reader(StringIO(card.strip()))
-            card = [item.strip() for row in card_reader for item in row]
-            cards.append(card)
-        return cards
+def load_cache():
+	global _cache
+	with open("price.cache", "r") as file:
+		cards = []
+		while True:
+			card = file.readline()
+			if not card: break
+			card_split = card.strip().split(",")
+			cards.append(card_split)
+		_cache = cards
+		return cards
 
-def addToCache(card: Card, price: float):
-    with open("price.cache", "a") as file:
-        file.write(f"\"{card.name}\", {card.cn}, {card.foil}, {card.set}, {price}")
+def addToCache(card: Card, price: float, reset: bool = False):
+	global _cache
+	same_date = False
+	with open("price.cache", "r") as file:
+		date = file.readline().strip()
+		if (date): 
+			current_date = datetime.now()
+			current_date = current_date.strftime('%m/%d/%Y')
+			same_date = date == current_date
+	
+	if (not same_date):
+		file = open("price.cache", "w")
+		file.write(datetime.now().strftime("%m/%d/%Y") + "\n")
+		file.close()
+	
+	with open("price.cache", "a") as file:
+		file.write(f"{generate_card_hash(card)},{price}\n")
+
+def generate_card_hash(card: Card):
+	return sha256(f"{card.name}{card.cn}{card.foil}{card.set}".encode()).hexdigest()
 
 if (__name__ == "__main__"):
-    print(checkCache())
+	pass
