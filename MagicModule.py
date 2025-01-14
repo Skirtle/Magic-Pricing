@@ -104,10 +104,11 @@ def getCardInfo(card, use_cache = False):
 		except:
 			failed = True
 	
-	if (failed): price = get_price_from_json(card, call_api(card))
+	if (not use_cache): price = get_price_from_json(card, call_api(card))
 	
 	# Add to cache
 	if (failed and use_cache): addToCache(card, price)
+	
 	return price
 
 def getPrice(card, use_cache = False):
@@ -115,8 +116,7 @@ def getPrice(card, use_cache = False):
 	if (_cache == None and use_cache): 
 		_cache = load_cache()
   
-	price = getCardInfo(card, use_cache)
-	return float(price)
+	return float(getCardInfo(card, use_cache))
 	
 def compareLists(list1, list2):
 	if (len(list1) != len(list2)):
@@ -202,10 +202,14 @@ def load_cache():
 		return cards
 
 def addToCache(card: Card, price: float, reset: bool = False):
-	global _cache
+	with open("price.cache", "a") as file:
+		file.write(f"{generate_card_hash(card)},{price}\n")
+
+def check_and_reset_cache():
 	same_date = False
 	with open("price.cache", "r") as file:
 		date = file.readline().strip()
+		print(date)
 		if (date): 
 			current_date = datetime.now()
 			current_date = current_date.strftime('%m/%d/%Y')
@@ -215,9 +219,6 @@ def addToCache(card: Card, price: float, reset: bool = False):
 		file = open("price.cache", "w")
 		file.write(datetime.now().strftime("%m/%d/%Y") + "\n")
 		file.close()
-	
-	with open("price.cache", "a") as file:
-		file.write(f"{generate_card_hash(card)},{price}\n")
 
 def generate_card_hash(card: Card):
 	return sha256(f"{card.name}{card.cn}{card.foil}{card.set}".encode()).hexdigest()

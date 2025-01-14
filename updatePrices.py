@@ -97,6 +97,7 @@ avgWaitTimes = [timeWait]
 
 if (not args.stop): args.stop = len(cards)
 print(f"Excel file set up. Retreiving prices from scryfall ({args.stop} cards), column {column}")
+mm.check_and_reset_cache()
 for card in cards:
 	if (args.export_only and not args.validate): break
 
@@ -112,8 +113,7 @@ for card in cards:
 		# Not validating
 		""" Excel sheet: A - Card, B - Collector Number (CN), C - Foiling, D - Set, E: - Date* """
 		try:
-			if (args.use_cache): 
-				singlePrice = mm.getPrice(card, args.use_cache)
+			singlePrice = mm.getPrice(card, args.use_cache)
     
 		except mm.InvalidCardException as ICE:
 			mm.log(f"WARNING: {ICE}", printMsg=True)
