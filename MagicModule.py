@@ -8,21 +8,12 @@ from time import sleep
 _cache = None
 
 def convTime(t):
-	if (t >= 3600):
-		unit = "hours"
-		t /= 3600
-		t = round(t, 2)
-	elif (t >= 60):
-		unit = "minutes"
-		t /= 60
-		t = round(t, 2)
-	else:
-		unit = "seconds"
-		t = round(t, 0)
-	split = str(t).split(".")
-	if (len(split) == 1): dec = "00"
-	else: dec = split[1].ljust(2, '0')
-	return [split[0] + "." + dec, unit]
+	t = int(t)
+	hours = str(t // 3600)
+	minutes = str((t % 3600) // 60)
+	seconds = str(t % 60)
+	return f"{0 if len(hours) == 1 else ''}{hours}:{0 if len(minutes) == 1 else ''}{minutes}:{0 if len(seconds) == 1 else ''}{seconds}"
+    
 
 def jprint(obj, ind = 2):
 	print(json.dumps(obj, sort_keys=True, indent=ind))
@@ -91,23 +82,25 @@ def call_api(card):
 def getCardInfo(card, use_cache = False):
 	global _cache
 	failed = False
-	
+	price = None
  
 	# Try to read from cache
 	if (use_cache):
 		card_hash = generate_card_hash(card)
 		value = next((row for row in _cache if row[0] == card_hash), None)
-  
 		try:
-			price = value[1]
-			return price
+			if (value[1] != None): 
+				return value[1]
 		except:
 			failed = True
 	
-	if (not use_cache): price = get_price_from_json(card, call_api(card))
+	elif (not use_cache): 
+		price = get_price_from_json(card, call_api(card))
 	
 	# Add to cache
-	if (failed and use_cache): addToCache(card, price)
+	if (failed and use_cache): 
+		price = get_price_from_json(card, call_api(card))
+		addToCache(card, price)
 	
 	return price
 
@@ -224,4 +217,5 @@ def generate_card_hash(card: Card):
 	return sha256(f"{card.name}{card.cn}{card.foil}{card.set}".encode()).hexdigest()
 
 if (__name__ == "__main__"):
-	pass
+	for i in range(7201):
+		convTime(i)

@@ -107,7 +107,7 @@ for card in cards:
 	# Percent done
 	perc = round((done / args.stop) * 100, 2)
 	eta = np.average(avgWaitTimes) * (args.stop - done)
-	eta, unit = mm.convTime(eta)
+	eta = mm.convTime(eta)
 	
 	if (not args.validate or args.export_only):
 		# Not validating
@@ -131,8 +131,8 @@ for card in cards:
 			if (mm.allTrue(compared)):
 				sheet[f"{column}{rowNumber}"] = singlePrice
 				sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-				shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
-				line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
+				shortLine = f"\r\t{perc}%, eta = {eta}"
+				line = f"\r\t{perc}% - Updated {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta}"
 				if (args.print): print(line + " " * len(line), flush = True, end = "")
 				else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 				found = True
@@ -147,8 +147,8 @@ for card in cards:
 			sheet[f"D{rowNumber}"] = card.set
 			sheet[f"{column}{rowNumber}"] = singlePrice
 			sheet[f"{column}{rowNumber}"].number_format = '"$"#,##0.00_);("$"#,##0.00)'
-			shortLine = f"\r\t{perc}%, eta = {eta} {unit}"
-			line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta} {unit}"
+			shortLine = f"\r\t{perc}%, eta = {eta}"
+			line = f"\r\t{perc}% - Added {card.name} ({card.cn} {card.set}, {card.foil}) for {singlePrice}, eta = {eta}"
 			if (args.print): print(line + " " * len(line), flush = True, end = "")
 			else: print(shortLine + " " * len(shortLine), flush = True, end = "")
 			addedCount += 1
