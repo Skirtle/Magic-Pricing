@@ -12,3 +12,5 @@ log.txt
 Old_Magic.accdb
 Magic-Pricing.code-workspace
 *.cache
+.vs/slnx.sqlite
+.vs/Magic-Pricing/v17/.wsuo
