@@ -202,7 +202,6 @@ def check_and_reset_cache():
 	same_date = False
 	with open("price.cache", "r") as file:
 		date = file.readline().strip()
-		print(date)
 		if (date): 
 			current_date = datetime.now()
 			current_date = current_date.strftime('%m/%d/%Y')
