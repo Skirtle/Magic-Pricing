@@ -136,6 +136,7 @@ if __name__ == "__main__":
 			plt.xlabel("Date")
 			plt.ylabel("Price")
 			plt.title(f"{selectedCard} price history")
+			prices = prices[~np.isnan(prices)] # Remove NaN from prices
 			ax.set_ylim(ymin = 0, ymax = 1.2 * max(prices))
 			ax.yaxis.set_major_formatter('${x:1.2f}')
 			fig.autofmt_xdate()
