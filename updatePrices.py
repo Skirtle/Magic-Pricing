@@ -1,4 +1,4 @@
-import time, pyodbc, sys, argparse
+import time, pyodbc, argparse
 import MagicModule as mm, numpy as np, datetime as dt
 from openpyxl import Workbook, load_workbook
 from os import getcwd

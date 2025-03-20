@@ -1,6 +1,11 @@
+import argparse
 import MagicModule as mm, numpy as np, matplotlib.pyplot as plt, PySimpleGUI as sg
-from openpyxl import Workbook, load_workbook
+from openpyxl import load_workbook
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+parser = argparse.ArgumentParser(description="Show a line graph of a chosen card's prices")
+parser.add_argument("-n", "--name", help="Name of Excel file", default="MagicPrices", type=str)
+args = parser.parse_args()
 
 def getPriceOfCard(card):
     #Goes through the input Excel workbook and finds the card and its prices
@@ -84,7 +89,7 @@ class Toolbar(NavigationToolbar2Tk):
 
 if __name__ == "__main__":
 	# Open excel workbook
-	excelFilename = input("Enter Excel filename, or press enter for default: ")
+	excelFilename = args.name
 	if (excelFilename == ""):
 		excelFilename = "MagicPrices.xlsx"
 	elif (".xlsx" not in excelFilename):
