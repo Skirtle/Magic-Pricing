@@ -7,7 +7,7 @@ from os import getcwd
 accessFilename = "Magic.accdb"
 validationFilename = "validations.txt"
 now = dt.datetime.now()
-timeWait = 0.1
+timeWait = 0.1 # Amount of time Scryfall requests that we use between API calls
 dir = getcwd() + "\\"
 encoding = "latin-1"
 
